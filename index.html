@@ -657,21 +657,27 @@ const DEVICE_SECRET = "radiuser@ssm#FirstAidCar";
 async function loadFromLocalStorage() {
     try {
         if (!window.firebaseAPI) {
-            await new Promise(resolve => setTimeout(resolve, 500)); // 等待模组加载
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
-        const { doc, getDoc, db } = window.firebaseAPI;
+        const { doc, getDoc, db, authReady } = window.firebaseAPI;
+        
+        // 👇 關鍵：先等待匿名登入完成，再去讀取資料
+        await authReady; 
+
         const docRef = doc(db, "carts", "main");
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
             const data = docSnap.data();
-            return data.carts || []; // 只回传 carts 数组
+            return data.carts || [];
         } else {
-            return null; // 云端没有数据
+            console.log("雲端沒有資料，回傳 null");
+            return null; 
         }
     } catch (error) {
-        console.error("读取 Firebase 失败:", error);
-        alert("读取云端数据失败，请检查网络！");
+        // 👇 這裡會印出詳細的錯誤原因（請按 F12 看 Console）
+        console.error("❌ 读取 Firebase 失败，详细原因：", error); 
+        alert("读取云端数据失败！请按 F12 查看详细错误。");
         return null;
     }
 }
