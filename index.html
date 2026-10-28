@@ -1,0 +1,2854 @@
+﻿<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>急救車物品管理系統</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, 'Microsoft JhengHei', 'Helvetica Neue', sans-serif; }
+        :root { font-size: 17px; }
+        html[data-fontsize="small"] { font-size: 15px; }
+        html[data-fontsize="medium"] { font-size: 17px; }
+        html[data-fontsize="large"] { font-size: 19px; }
+        html[data-fontsize="xlarge"] { font-size: 21px; }
+        html[data-fontsize="xxlarge"] { font-size: 24px; }
+        html[data-fontsize="xxxlarge"] { font-size: 27px; }
+        body { background: #f4f7fc; margin: 0; padding: 24px; color: #1e2b3c; font-size: 1rem; }
+        .app { max-width: 1500px; margin: 0 auto; }
+
+        h1 { font-size: 2.1rem; display: flex; align-items: center; gap: 12px; margin-top: 0; margin-bottom: 18px; color: #0b3b5c; border-left: 7px solid #1e7e83; padding-left: 20px; }
+
+        .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 22px; background: white; padding: 16px 26px; border-radius: 18px; box-shadow: 0 6px 14px rgba(0,20,30,0.08); }
+        .btn { background: #fff; border: 1px solid #b8cdd9; padding: 11px 22px; border-radius: 40px; font-weight: 600; font-size: 1rem; color: #1e4a5f; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: 0.15s; }
+        .btn:hover { background: #e5f0f5; border-color: #7fa9bc; }
+        .btn-primary { background: #1e7e83; border-color: #1e7e83; color: #fff; }
+        .btn-primary:hover { background: #146c70; }
+        .btn-warning { background: #fff8e1; border-color: #e6c300; color: #8a6d00; }
+        .btn-warning:hover { background: #fff2c2; }
+        .btn-danger { background: #fff0f0; border-color: #d99b9b; color: #b33a3a; }
+        .btn-danger:hover { background: #ffe0e0; }
+        .btn-export { background: #2b5797; border-color: #2b5797; color: #fff; }
+        .btn-export:hover { background: #1e3f73; }
+        .btn-admin { background: #6b4fa8; border-color: #6b4fa8; color: #fff; }
+        .btn-admin:hover { background: #573e8c; }
+        .btn-purple { background: #6b4fa8; border-color: #6b4fa8; color: #fff; }
+        .btn-purple:hover { background: #573e8c; }
+        .btn-purple-outline { background: #fff; border-color: #6b4fa8; color: #6b4fa8; }
+        .btn-purple-outline:hover { background: #ede4ff; }
+        .btn-sm { padding: 7px 15px; font-size: 0.92rem; }
+        .btn-move { background: #e8f4f9; border-color: #1e7e83; color: #1e4a5f; padding: 5px 10px; font-size: 0.85rem; line-height: 1; }
+        .btn-move:hover { background: #d0e8f0; }
+        .btn-move:disabled { opacity: 0.35; cursor: not-allowed; }
+        .fontsize-group { display: inline-flex; gap: 4px; align-items: center; background: #f5f8fa; border: 1px solid #cbdae3; border-radius: 40px; padding: 4px 8px; }
+        .fontsize-group button { background: #fff; border: 1px solid #cbdae3; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: 700; font-size: 0.9rem; color: #1e4a5f; transition: 0.15s; display: inline-flex; align-items: center; justify-content: center; }
+        .fontsize-group button:hover { background: #e5f0f5; border-color: #1e7e83; }
+        .fontsize-group button.active { background: #1e7e83; border-color: #1e7e83; color: #fff; }
+        .fontsize-label { font-size: 0.8rem; color: #6b8a9c; margin-left: 4px; }
+
+        .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; background: white; padding: 12px 18px; border-radius: 18px; box-shadow: 0 4px 10px rgba(0,20,30,0.06); align-items: center; }
+        .tab-btn { padding: 10px 20px; border-radius: 40px; border: 1px solid #c2dae6; background: #fff; color: #1e4a5f; font-weight: 600; font-size: 0.98rem; cursor: pointer; transition: 0.1s; white-space: nowrap; }
+        .tab-btn:hover { background: #e5f0f5; }
+        .tab-btn.active { background: #1e7e83; border-color: #1e7e83; color: #fff; }
+        .tab-btn.tab-alert { background: #fff8e1; border-color: #e6c300; color: #8a6d00; }
+        .tab-btn.tab-alert.active { background: #d4a800; border-color: #d4a800; color: #fff; }
+        .tab-btn.draggable-cart { cursor: grab; position: relative; user-select: none; }
+        .tab-btn.draggable-cart:active { cursor: grabbing; }
+        .tab-btn.draggable-cart.dragging { opacity: 0.35; }
+        .tab-btn.draggable-cart.drag-over { box-shadow: 0 0 0 3px #1e7e83, 0 0 12px rgba(30,126,131,0.4); transform: scale(1.05); }
+        .tab-btn.draggable-cart::after { content: '⋮⋮'; font-size: 0.7rem; color: #8aa9bb; margin-left: 6px; letter-spacing: -2px; }
+        .tab-btn.tab-btn.active.draggable-cart::after { color: rgba(255,255,255,0.7); }
+
+        .cart-card { background: #fff; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,20,30,0.08); overflow: hidden; border: 1px solid #dee9f0; margin-bottom: 32px; }
+        .cart-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; background: #eef6fa; padding: 18px 28px; border-bottom: 1px solid #cfe0ea; }
+        .cart-title { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .cart-name { font-size: 1.6rem; font-weight: 700; color: #0b3b5c; background: transparent; border: 1px solid transparent; padding: 6px 10px; border-radius: 8px; min-width: 260px; }
+        .cart-name:focus { background: #fff; border-color: #1e7e83; outline: none; }
+        .cart-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .cart-meta { display: flex; gap: 10px; align-items: center; font-size: 0.95rem; color: #3b657a; flex-wrap: wrap; }
+        .cart-meta span { background: #fff; padding: 6px 14px; border-radius: 30px; border: 1px solid #c2dae6; }
+        .cart-meta .badge-warning { background: #fff8d6; color: #8a6d00; border-color: #e6c300; font-weight: 700; }
+        .cart-meta .badge-danger { background: #ffe1e1; color: #a00; border-color: #d44; font-weight: 700; }
+        .cart-meta .badge-danger.pulse { animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(211,68,68,0.4); }
+            50% { box-shadow: 0 0 0 6px rgba(211,68,68,0); }
+        }
+
+        .section-header { background: #dceef5; padding: 12px 22px; font-weight: 700; color: #0b3b5c; font-size: 1.15rem; border-top: 1px solid #cfe0ea; border-bottom: 1px solid #cfe0ea; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .section-header:first-of-type { border-top: none; }
+        .section-header .section-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .section-title-input { background: transparent; border: 1px solid transparent; font-weight: 700; color: #0b3b5c; font-size: 1.15rem; padding: 4px 8px; border-radius: 6px; min-width: 260px; flex: 1; }
+        .section-title-input:focus { background: #fff; border-color: #1e7e83; outline: none; }
+
+        .add-section-bar { padding: 16px 22px; text-align: center; background: #f7fbfd; border-top: 1px dashed #cfe0ea; }
+
+        .table-wrapper { overflow-x: auto; padding: 0 14px 14px; }
+        table { width: 100%; border-collapse: collapse; font-size: 1rem; min-width: 1200px; }
+        th { text-align: left; padding: 12px 12px 8px; font-weight: 600; color: #2a4d62; border-bottom: 2px solid #c9dde8; white-space: nowrap; font-size: 0.95rem; }
+        td { padding: 8px 12px; border-bottom: 1px solid #e5eef3; vertical-align: middle; }
+
+        input.item-name-input, input.number-input, input.note-input, input.lock-no-input {
+            width: 100%; padding: 9px 12px; border: 1px solid #cbdae3; border-radius: 10px; font-size: 1rem; background: #fff; transition: 0.1s;
+        }
+        input.item-name-input:focus, input.number-input:focus, input.note-input:focus, input.lock-no-input:focus { border-color: #1e7e83; outline: none; box-shadow: 0 0 0 3px rgba(30,126,131,0.12); }
+        input.note-input { font-size: 0.95rem; }
+        input.lock-no-input { font-size: 0.95rem; }
+        .number-input, .qty-input { width: 80px; text-align: center; }
+
+        .date-seg-group {
+            display: inline-flex; align-items: center; gap: 3px;
+            background: #fff; border: 1px solid #cbdae3; border-radius: 10px;
+            padding: 4px 8px; transition: 0.1s;
+        }
+        .date-seg-group:focus-within {
+            border-color: #1e7e83;
+            box-shadow: 0 0 0 3px rgba(30,126,131,0.12);
+        }
+        .date-seg {
+            border: none; outline: none; background: transparent;
+            font-size: 1rem; text-align: center; font-family: inherit;
+            color: #1e2b3c; padding: 5px 3px;
+            -moz-appearance: textfield;
+        }
+        .date-seg::-webkit-outer-spin-button,
+        .date-seg::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .date-seg.year { width: 58px; }
+        .date-seg.month { width: 38px; }
+        .date-seg.day { width: 38px; }
+        .date-seg-sep { color: #8aa9bb; font-weight: 600; user-select: none; }
+        .date-seg-clear {
+            background: none; border: none; cursor: pointer;
+            color: #8aa9bb; font-size: 0.85rem; padding: 3px 6px;
+            border-radius: 6px; line-height: 1; margin-left: 2px;
+        }
+        .date-seg-clear:hover { background: #ffe1e1; color: #b33a3a; }
+
+        .date-seg-group.warning { background-color: #fff8d6 !important; border-color: #e6c300 !important; }
+        .date-seg-group.warning .date-seg { font-weight: 600; }
+        .date-seg-group.danger { background-color: #ffe1e1 !important; border-color: #d44 !important; }
+        .date-seg-group.danger .date-seg { color: #a00 !important; font-weight: 700; }
+
+        .row-warning { background-color: #fffbe6; }
+        .row-danger { background-color: #fff0f0; }
+        .row-expired { background-color: #ffe0e0; }
+        .row-outofstock { background-color: #ffe1e1 !important; }
+
+        .action-buttons { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+        .icon-btn { background: none; border: none; font-size: 1.25rem; cursor: pointer; padding: 6px 8px; border-radius: 30px; color: #5e7e8f; transition: 0.1s; line-height: 1; }
+        .icon-btn:hover { background: #e1eef5; color: #0b3b5c; }
+        .icon-btn.delete:hover { background: #ffe1e1; color: #b33a3a; }
+        .no-expiry-badge { display: inline-block; background: #e8f0f5; color: #4a6f82; font-size: 0.82rem; padding: 4px 12px; border-radius: 30px; font-weight: 500; }
+        .badge { background: #1e7e83; color: #fff; padding: 4px 12px; border-radius: 30px; font-size: 0.85rem; font-weight: 600; }
+
+        .oos-label { display: inline-flex; align-items: center; gap: 5px; font-size: 0.9rem; color: #3b657a; font-weight: 500; cursor: pointer; user-select: none; white-space: nowrap; }
+        .oos-label input[type="checkbox"] { width: 18px; height: 18px; accent-color: #b33a3a; cursor: pointer; }
+        .oos-label.checked { color: #fff; background: #b33a3a; padding: 4px 10px; border-radius: 30px; font-weight: 700; }
+        .oos-label.checked input[type="checkbox"] { accent-color: #fff; }
+
+        .overview-card { background: #fff; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,20,30,0.08); padding: 26px; border: 1px solid #dee9f0; }
+        .overview-title { font-size: 1.5rem; font-weight: 700; color: #0b3b5c; margin-bottom: 8px; }
+        .overview-sub { color: #4a6f82; font-size: 1rem; margin-bottom: 20px; }
+        .overview-summary { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 22px; }
+        .summary-box { padding: 16px 28px; border-radius: 16px; font-weight: 600; min-width: 150px; font-size: 1rem; }
+        .summary-box .num { font-size: 2rem; font-weight: 800; display: block; }
+        .summary-box.danger { background: #ffe1e1; color: #a00; }
+        .summary-box.warning { background: #fff8d6; color: #8a6d00; }
+        .summary-box.total { background: #e3f0f5; color: #1e4a5f; }
+
+        .month15-card { background: #fff; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,20,30,0.08); padding: 26px; border: 1px solid #dee9f0; margin-bottom: 30px; border-left: 6px solid #6b4fa8; }
+        .month15-title { font-size: 1.5rem; font-weight: 700; color: #6b4fa8; margin-bottom: 8px; }
+        .month15-sub { color: #4a6f82; font-size: 1rem; margin-bottom: 20px; }
+        .month15-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 20px; padding: 14px 18px; background: #f5f0ff; border-radius: 14px; border: 1px solid #d8c9f0; }
+        .month15-controls label { font-weight: 600; color: #6b4fa8; }
+        .month15-controls select {
+            padding: 10px 14px; border: 1px solid #c9b8e8; border-radius: 10px; font-size: 1rem;
+            background: #fff; color: #1e2b3c; cursor: pointer; font-family: inherit;
+        }
+        .month15-controls select:focus { border-color: #6b4fa8; outline: none; box-shadow: 0 0 0 3px rgba(107,79,168,0.15); }
+        .month15-countdown { font-size: 0.95rem; color: #6b4fa8; font-weight: 600; margin-left: auto; }
+        .month15-empty { text-align: center; padding: 40px 20px; color: #8aa9bb; font-size: 1.05rem; }
+        .month15-summary { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+        .month15-summary .summary-box.purple { background: #ede4ff; color: #4a2d80; }
+        .month15-location-header { background: #f0e8ff; padding: 10px 18px; font-weight: 700; color: #4a2d80; border-radius: 10px; margin: 16px 0 8px; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #6b4fa8; }
+        .month15-location-header .count-badge { background: #6b4fa8; color: #fff; padding: 3px 12px; border-radius: 30px; font-size: 0.8rem; }
+        .status-warning { background: #fff8d6; font-weight: 700; color: #8a6d00; }
+        .status-danger { background: #ffe1e1; font-weight: 700; color: #a00; }
+        .note-cell { font-size: 0.9rem; color: #5e7e8f; max-width: 180px; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #8aa9bb; font-size: 1.1rem; }
+
+        .footer-note { margin-top: 32px; padding: 18px 28px; background: #e3f0f5; border-radius: 16px; font-size: 0.95rem; color: #2f5569; display: flex; flex-wrap: wrap; gap: 22px; justify-content: space-between; }
+
+        .page-content { display: none; }
+        .page-content.active { display: block; }
+
+        .location-group-header { background: #e8f4f9; padding: 12px 20px; font-weight: 700; color: #0b3b5c; border-radius: 12px; margin: 18px 0 10px; font-size: 1.05rem; display: flex; justify-content: space-between; align-items: center; }
+        .location-group-header .count-badge { background: #1e7e83; color: #fff; padding: 4px 14px; border-radius: 30px; font-size: 0.85rem; }
+
+        .template-hint { font-size: 0.9rem; color: #6b8a9c; }
+        .template-hint.ok { color: #1e7e83; font-weight: 600; }
+
+        #loginOverlay {
+            position: fixed; inset: 0; background: linear-gradient(135deg, #1e7e83 0%, #0b3b5c 100%);
+            display: flex; align-items: center; justify-content: center; z-index: 9999;
+        }
+        .login-box {
+            background: #fff; border-radius: 24px; padding: 40px 48px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center; max-width: 440px; width: 90%;
+        }
+        .login-box h2 { margin: 0 0 8px; color: #0b3b5c; font-size: 1.8rem; }
+        .login-box p { color: #6b8a9c; margin: 0 0 24px; font-size: 1rem; }
+        .login-box input {
+            width: 100%; padding: 14px 18px; border: 1px solid #cbdae3; border-radius: 12px;
+            font-size: 1.1rem; text-align: center; margin-bottom: 18px;
+        }
+        .login-box input:focus { border-color: #1e7e83; outline: none; box-shadow: 0 0 0 3px rgba(30,126,131,0.15); }
+        .login-box button {
+            width: 100%; padding: 14px; background: #1e7e83; color: #fff; border: none; border-radius: 12px;
+            font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.15s;
+        }
+        .login-box button:hover { background: #146c70; }
+        .login-error { color: #b33a3a; font-size: 0.9rem; margin-top: 10px; min-height: 20px; }
+
+        .user-bar { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; color: #1e4a5f; }
+        .user-bar .user-name { background: #e3f0f5; padding: 6px 14px; border-radius: 30px; font-weight: 600; }
+        .user-bar .user-name.full-access { background: #e3f5e8; color: #1e7e3c; border: 1px solid #7dcf95; }
+        .user-bar .logout-btn { background: #fff; border: 1px solid #b8cdd9; padding: 6px 14px; border-radius: 30px; font-size: 0.85rem; cursor: pointer; color: #1e4a5f; font-weight: 600; }
+        .user-bar .logout-btn:hover { background: #ffe1e1; border-color: #d99b9b; color: #b33a3a; }
+
+        .admin-card { background: #fff; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,20,30,0.08); padding: 26px; border: 1px solid #dee9f0; }
+        .admin-title { font-size: 1.5rem; font-weight: 700; color: #0b3b5c; margin-bottom: 8px; }
+        .admin-sub { color: #4a6f82; font-size: 1rem; margin-bottom: 20px; }
+        .admin-section { margin-bottom: 36px; padding-bottom: 28px; border-bottom: 1px dashed #cfe0ea; }
+        .admin-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .admin-section-title { font-size: 1.2rem; font-weight: 700; color: #0b3b5c; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .admin-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 14px; }
+        .admin-form input[type="text"], .admin-form input[type="number"], .admin-form input[type="date"] {
+            padding: 10px 14px; border: 1px solid #cbdae3; border-radius: 10px; font-size: 1rem;
+        }
+        .admin-form input:focus { border-color: #1e7e83; outline: none; box-shadow: 0 0 0 3px rgba(30,126,131,0.12); }
+        .admin-form label { font-weight: 600; color: #2a4d62; }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+        .admin-table th { background: #eef6fa; padding: 10px 12px; text-align: left; border-bottom: 2px solid #c9dde8; font-weight: 600; color: #2a4d62; white-space: nowrap; }
+        .admin-table td { padding: 9px 12px; border-bottom: 1px solid #e5eef3; vertical-align: middle; }
+        .admin-table tr:hover td { background: #f7fbfd; }
+        .log-action { display: inline-block; padding: 3px 10px; border-radius: 30px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
+        .log-action.create { background: #e3f5e8; color: #1e7e3c; }
+        .log-action.update { background: #fff8d6; color: #8a6d00; }
+        .log-action.delete { background: #ffe1e1; color: #a00; }
+        .log-action.login { background: #e3f0f5; color: #1e4a5f; }
+        .log-empty { text-align: center; padding: 50px 20px; color: #8aa9bb; font-size: 1.05rem; }
+        .admin-checkbox { width: 18px; height: 18px; accent-color: #1e7e83; cursor: pointer; }
+        .admin-hint { font-size: 0.9rem; color: #6b8a9c; margin-bottom: 10px; }
+        .admin-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+        .cart-id-cell { font-family: monospace; font-size: 0.85rem; color: #6b8a9c; }
+    </style>
+</head>
+<body>
+
+<div id="loginOverlay">
+    <div class="login-box">
+        <h2>🚑 急救車物品管理系統</h2>
+        <p>請輸入您的工號以進入系統</p>
+        <input type="text" id="loginInput" placeholder="請輸入工號" autocomplete="off" maxlength="7">
+        <button id="loginBtn">進入系統</button>
+        <div class="login-error" id="loginError"></div>
+    </div>
+</div>
+
+<div class="app" id="appContainer" style="display:none;">
+    <h1>
+        <span>🚑 急救車物品管理系統</span>
+        <span class="badge" id="cartCount">0 台</span>
+        <span class="user-bar" style="margin-left:auto;">
+            <span class="user-name" id="currentUser">—</span>
+            <button class="logout-btn" id="logoutBtn">登出</button>
+        </span>
+    </h1>
+
+    <div class="toolbar">
+        <button class="btn btn-primary" id="addCartBtn">＋ 新增急救車</button>
+        <button class="btn btn-export" id="exportWordBtn">📄 匯出</button>
+        <span class="template-hint" id="templateHint">模板：未選擇</span>
+        <button class="btn btn-admin" id="adminBtn">⚙️ 管理功能 🔒</button>
+        <div class="fontsize-group" title="調整字體大小">
+            <button id="fontSizeDown" title="縮小字體">A－</button>
+            <button id="fontSizeUp" title="放大字體">A＋</button>
+            <span class="fontsize-label" id="fontSizeLabel">中</span>
+        </div>
+        <span style="flex:1; text-align:right; font-size:0.9rem; color:#476f84;">
+            ⚠️ &lt; 90天 黃色 | &lt; 30天 紅色 | 缺貨 紅色 | 留空 = 不會過期 | ⏎ Enter 跳下一項
+        </span>
+    </div>
+
+    <input type="file" id="templateFileInput" accept=".docx" style="display:none">
+    <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none">
+
+    <div class="tabs" id="tabsContainer"></div>
+
+    <div id="pageContainer"></div>
+
+    <div class="footer-note">
+        <div>📌 核查所有物品有效期，兩個月內到期物品必須提前更換</div>
+        <div>📌 專用物品需於有效期9個月前提前申請補充</div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.7/dist/pizzip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.50.0/build/docxtemplater.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+<!-- 引入 Firebase 模组 -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+  // ⚠️ 1. 这里填入你在 Firebase 后台复制的 firebaseConfig
+  const firebaseConfig = {
+    apiKey: "AIzaSy...",
+    authDomain: "firstaidcar.firebaseapp.com",
+    projectId: "firstaidcar",
+    storageBucket: "firstaidcar.firebasestorage.app",
+    messagingSenderId: "1074989986808",
+    appId: "1:1074989986808:web:..."
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // 将 Firebase 的函数挂载到 window 上，让原本的代码能调用
+  window.firebaseAPI = { doc, getDoc, setDoc, db };
+</script>
+
+<script>
+/* 備用 saveAs */
+function safeSaveAs(blob, filename) {
+    if (typeof window.saveAs === 'function') {
+        window.saveAs(blob, filename);
+        return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ============================================================
+   字體大小設定
+   ============================================================ */
+const FONT_KEY = 'firstAidFontSize_v2';
+const FONT_SIZES = ['small', 'medium', 'large', 'xlarge', 'xxlarge', 'xxxlarge'];
+const FONT_LABELS = { small: '小', medium: '中', large: '大', xlarge: '特大', xxlarge: '巨大', xxxlarge: '超大' };
+
+function loadFontSize() {
+    try {
+        const v = localStorage.getItem(FONT_KEY);
+        if (FONT_SIZES.includes(v)) return v;
+    } catch (e) {}
+    return 'medium';
+}
+function applyFontSize(size) {
+    if (!FONT_SIZES.includes(size)) size = 'medium';
+    document.documentElement.setAttribute('data-fontsize', size);
+    try { localStorage.setItem(FONT_KEY, size); } catch (e) {}
+    const label = document.getElementById('fontSizeLabel');
+    if (label) label.textContent = FONT_LABELS[size];
+}
+function changeFontSize(direction) {
+    let cur = loadFontSize();
+    let idx = FONT_SIZES.indexOf(cur);
+    if (direction > 0) idx = Math.min(FONT_SIZES.length - 1, idx + 1);
+    else idx = Math.max(0, idx - 1);
+    applyFontSize(FONT_SIZES[idx]);
+}
+
+/* 立即套用（避免閃爍） */
+(function() {
+    const saved = (function(){
+        try { return localStorage.getItem(FONT_KEY) || 'medium'; } catch (e) { return 'medium'; }
+    })();
+    document.documentElement.setAttribute('data-fontsize', FONT_SIZES.includes(saved) ? saved : 'medium');
+})();
+
+/* ============================================================
+   資料模型
+   ============================================================ */
+const SECTION_DEFS = [
+    { key: 'top',       name: '急救車檯面 Top of the e-trolley' },
+    { key: 'back',      name: '急救車背部 Back of the e-trolley' },
+    { key: 'side',      name: '急救車側面 Side of the e-trolley' },
+    { key: 'stand',     name: '急救車支架 Stand of the e-trolley' },
+    { key: 'level1',    name: '第一層 急救藥物盒 (由藥房負責供應) 1st level Emergency Drugs Kit' },
+    { key: 'level2',    name: '第二層 靜脈注射用品 2nd level Circulation & Intravenous supplies' },
+    { key: 'level3',    name: '第三層 呼吸及氣道用品 3rd level Airway & Breathing' },
+    { key: 'level4',    name: '第四層 穿刺用品及防護裝備 4th level Invasive Materials & Protective equipments' }
+];
+
+const FULL_ACCESS_KEY = 'firstAidFullAccessUsers_v1';
+const DEFAULT_FULL_ACCESS = ['0206179', '0204069', '0203024'];
+const SUPER_ADMIN = '0206179';
+
+function loadFullAccessUsers() {
+    try {
+        const raw = localStorage.getItem(FULL_ACCESS_KEY);
+        if (!raw) return DEFAULT_FULL_ACCESS.slice();
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return DEFAULT_FULL_ACCESS.slice();
+        return arr;
+    } catch (e) { return DEFAULT_FULL_ACCESS.slice(); }
+}
+function saveFullAccessUsers(arr) {
+    try { localStorage.setItem(FULL_ACCESS_KEY, JSON.stringify(arr)); } catch (e) {}
+}
+let fullAccessUsers = loadFullAccessUsers();
+function isFullAccessUser(user) { return fullAccessUsers.includes(user); }
+function isSuperAdmin(user) { return user === SUPER_ADMIN; }
+
+const WORD_TEMPLATE = {
+    page1: [
+        {
+            title: '急救車檯面 Top of the e-trolley',
+            items: [
+                { name: '除顫機', section: 'top', match: '除顫機', placeholder: 'top_defib' },
+                { name: '吸痰機', section: 'top', match: '吸痰機', placeholder: 'top_suction' },
+                { name: '導電專用啫喱', section: 'top', match: '導電專用啫喱', placeholder: 'top_gel' },
+                { name: '電極貼', section: 'top', match: '電極貼', placeholder: 'top_ecg' },
+                { name: '剪刀', section: 'top', match: '剪刀', placeholder: 'top_scissors' },
+                { name: '利器盒', section: 'top', match: '利器盒', placeholder: 'top_sharp' },
+                { name: '心電圖紙', section: 'top', match: '心電圖紙', placeholder: 'top_ecgpaper' },
+                { name: '筆型電筒', section: 'top', match: '筆型電筒', placeholder: 'top_torch' },
+                { name: '手套盒 M size', section: 'top', match: '手套盒 M size', placeholder: 'top_gloves' },
+                { name: '除顫起搏電極片', section: 'top', match: '除顫起搏電極片', placeholder: 'top_pacing' },
+                { name: '計時器', section: 'top', match: '計時器', placeholder: 'top_timer' }
+            ]
+        },
+        {
+            title: '急救車背部 Back of the e-trolley',
+            items: [
+                { name: '按壓背板', section: 'back', match: '按壓背板', placeholder: 'back_board' }
+            ]
+        },
+        {
+            title: '急救車側面 Side of the e-trolley',
+            items: [
+                { name: '氧氣調節器', section: 'side', match: '氧氣調節器', placeholder: 'side_regulator' },
+                { name: '氧氣瓶', section: 'side', match: '氧氣瓶', placeholder: 'side_cylinder' }
+            ]
+        },
+        {
+            title: '急救車支架 Stand of the e-trolley',
+            items: [
+                { name: '聽診器', section: 'stand', match: '聽診器', placeholder: 'stand_stethoscope' },
+                { name: '復甦球', section: 'stand', match: '復甦球', placeholder: 'stand_bvm' },
+                { name: '氣管內管探條', section: 'stand', match: '氣管內管探條', placeholder: 'stand_bougie' },
+                { name: '急救記錄表', section: 'stand', match: '急救記錄表', placeholder: 'stand_forms' }
+            ]
+        },
+        {
+            title: '第一層 急救藥物盒',
+            items: [
+                { name: '急救藥物盒鎖匙', section: 'level1', match: '急救藥物盒鎖匙', placeholder: 'level1_lock' }
+            ]
+        },
+        {
+            title: '第二層 靜脈注射用品',
+            items: [
+                { name: '18G', section: 'level2', match: '靜脈留置導管 18G', placeholder: 'level2_18G' },
+                { name: '20G', section: 'level2', match: '靜脈留置導管 20G', placeholder: 'level2_20G' },
+                { name: '22G', section: 'level2', match: '靜脈留置導管 22G', placeholder: 'level2_22G' },
+                { name: '24G', section: 'level2', match: '靜脈留置導管 24G', placeholder: 'level2_24G' },
+                { name: '針咀 18G', section: 'level2', match: '針咀 Needle 18G', placeholder: 'level2_needle18G' },
+                { name: '針咀 21G', section: 'level2', match: '針咀 Needle 21G', placeholder: 'level2_needle21G' },
+                { name: '止血帶', section: 'level2', match: '止血帶', placeholder: 'level2_tour' },
+                { name: 'IV Dressing', section: 'level2', match: '靜脈留置導管透明膠紙', placeholder: 'level2_ivdressing' },
+                { name: '三路制', section: 'level2', match: '三路制', placeholder: 'level2_stopcocks' },
+                { name: '膠紙', section: 'level2', match: '膠紙 Tape', placeholder: 'level2_tape' },
+                { name: 'Syringe 3ml', section: 'level2', match: '針筒 Syringe 3ml', placeholder: 'level2_syringe3' },
+                { name: 'Syringe 5ml', section: 'level2', match: '針筒 Syringe 5ml', placeholder: 'level2_syringe5' },
+                { name: 'Syringe 10ml', section: 'level2', match: '針筒 Syringe 10ml', placeholder: 'level2_syringe10' },
+                { name: 'Syringe 20ml', section: 'level2', match: '針筒 Syringe 20ml', placeholder: 'level2_syringe20' },
+                { name: 'ABG', section: 'level2', match: '血氣分析針筒', placeholder: 'level2_abg' },
+                { name: 'Heparin', section: 'level2', match: '肝素開', placeholder: 'level2_heparin' },
+                { name: 'Extension', section: 'level2', match: '靜脈輸液延長管', placeholder: 'level2_extension' },
+                { name: 'Alcohol', section: 'level2', match: '酒精棉片', placeholder: 'level2_alcohol' },
+                { name: 'Scalpe', section: 'level2', match: '一次性無菌刀', placeholder: 'level2_scalpe' }
+            ]
+        }
+    ],
+    page2: [
+        {
+            title: '第三層呼吸及氣道用品',
+            items: [
+                { name: '口咽管 No.2', section: 'level3', match: '口咽管 No.2', placeholder: 'level3_op2' },
+                { name: '口咽管 No.3', section: 'level3', match: '口咽管 No.3', placeholder: 'level3_op3' },
+                { name: 'LMA No.3', section: 'level3', match: '聲門上呼吸道 No.3', placeholder: 'level3_lma3' },
+                { name: 'LMA No.4', section: 'level3', match: '聲門上呼吸道 No.4', placeholder: 'level3_lma4' },
+                { name: 'ETT 6', section: 'level3', match: '氣管內管 Fr. 6', placeholder: 'level3_ett6' },
+                { name: 'ETT 6.5', section: 'level3', match: '氣管內管 Fr. 6.5', placeholder: 'level3_ett65' },
+                { name: 'ETT 7', section: 'level3', match: '氣管內管 Fr. 7', placeholder: 'level3_ett7' },
+                { name: 'ETT 7.5', section: 'level3', match: '氣管內管 Fr. 7.5', placeholder: 'level3_ett75' },
+                { name: 'ETT 8', section: 'level3', match: '氣管內管 Fr. 8', placeholder: 'level3_ett8' },
+                { name: 'ETT 8.5', section: 'level3', match: '氣管內管 Fr. 8.5', placeholder: 'level3_ett85' },
+                { name: 'Stylet', section: 'level3', match: '插管引子', placeholder: 'level3_stylet' },
+                { name: 'Magill', section: 'level3', match: '舌鉗', placeholder: 'level3_magill' },
+                { name: 'Jelly', section: 'level3', match: '無菌水溶性潤滑劑', placeholder: 'level3_jelly' },
+                { name: 'Syringe 20mL', section: 'level3', match: '針筒 20mL', placeholder: 'level3_syringe20' },
+                { name: 'Handle cover', section: 'level3', match: '一次性喉鏡手柄保護套', placeholder: 'level3_handlecover' },
+                { name: 'NP 7', section: 'level3', match: '鼻咽管 No.7', placeholder: 'level3_np7' },
+                { name: 'NP 8', section: 'level3', match: '鼻咽管 No.8', placeholder: 'level3_np8' },
+                { name: 'Laryngoscope 3', section: 'level3', match: '喉鏡 No.3', placeholder: 'level3_laryng3' },
+                { name: 'Laryngoscope 4', section: 'level3', match: '喉鏡 No.4', placeholder: 'level3_laryng4' },
+                { name: 'Gloves 6', section: 'level3', match: '無菌手套 No.6', placeholder: 'level3_gloves6' },
+                { name: 'Gloves 6.5', section: 'level3', match: '無菌手套 No.6.5', placeholder: 'level3_gloves65' },
+                { name: 'Gloves 7', section: 'level3', match: '無菌手套 No.7', placeholder: 'level3_gloves7' },
+                { name: 'Gloves 7.5', section: 'level3', match: '無菌手套 No.7.5', placeholder: 'level3_gloves75' },
+                { name: 'Gloves 8', section: 'level3', match: '無菌手套 No.8', placeholder: 'level3_gloves8' },
+                { name: 'O2 tube', section: 'level3', match: '氧氣延長管', placeholder: 'level3_o2tube' },
+                { name: 'Yankauer', section: 'level3', match: '楊克氏抽吸硬管', placeholder: 'level3_yankauer' },
+                { name: 'Tape', section: 'level3', match: '白扁帶', placeholder: 'level3_tape' },
+                { name: 'ETT protector', section: 'level3', match: '咬口膠', placeholder: 'level3_ettprotector' },
+                { name: 'Battery', section: 'level3', match: 'Size C 電池', placeholder: 'level3_battery' }
+            ]
+        },
+        {
+            title: '第四層穿刺用品及防護裝備',
+            items: [
+                { name: 'Gauze 7.5', section: 'level4', match: '無菌紗布 7.5', placeholder: 'level4_gauze75' },
+                { name: 'Gauze 10', section: 'level4', match: '無菌紗布 10', placeholder: 'level4_gauze10' },
+                { name: 'Betadine', section: 'level4', match: '優碘', placeholder: 'level4_betadin' },
+                { name: 'Dressing kit', section: 'level4', match: '一次性換藥包', placeholder: 'level4_dressing' },
+                { name: 'Apron', section: 'level4', match: '一次性圍裙', placeholder: 'level4_apron' },
+                { name: 'FaceShield', section: 'level4', match: '防護面罩', placeholder: 'level4_faceshield' },
+                { name: 'Gloves L', section: 'level4', match: '手套盒 L size', placeholder: 'level4_glovesL' },
+                { name: 'Gloves S', section: 'level4', match: '手套盒 S size', placeholder: 'level4_glovesS' }
+            ]
+        }
+    ]
+};
+
+function mk(name, qty, expiry = '', outOfStock = false, note = '', lockNo = '') {
+    return { id: genId('item'), name, quantity: qty, expiry, outOfStock, note, lockNo };
+}
+
+function createFullCart(name) {
+    const items = {
+        top: [
+            mk('除顫機 Defibrillator / 自動體外除顫器 (AED) 註1', 1),
+            mk('吸痰機 註2', 1),
+            mk('導電專用啫喱 Conductive gel 或手持式除顫器導電凝膠墊 Defibrillation Pads', 1),
+            mk('電極貼 ECG pads', 10),
+            mk('剪刀 Scissors', 1),
+            mk('利器盒 (小) Sharp Box (small)', 1),
+            mk('心電圖紙 ECG paper (按急救車上除顫機型號)', 1),
+            mk('筆型電筒 Pen Torch', 1),
+            mk('手套盒 M size Gloves (M size)', 1),
+            mk('除顫起搏電極片 Defib pacing pads (按急救車上除顫機型號) ▲', 1),
+            mk('計時器 Timer', 1)
+        ],
+        back: [ mk('按壓背板 Chest Compression Board', 1) ],
+        side: [
+            mk('氧氣調節器 Oxygen regulator', 1),
+            mk('氧氣瓶及打開閥門工具 (如適用) Oxygen Cylinder (D size 或以上及壓力不少於 1000 psi)', 1)
+        ],
+        stand: [
+            mk('聽診器 Stethoscope', 1),
+            mk('復甦球 BVM ▲', 1),
+            mk('氣管內管探條 Endotracheal Tube Introducer (Bougie) ▲', 2),
+            mk('急救記錄表 Resuscitation Forms', 1)
+        ],
+        level1: [ mk('急救藥物盒鎖匙 Lock No.1', 1, '', false, '', '') ],
+        level2: [
+            mk('靜脈留置導管 18G Intravenous Cannula 18G', 2),
+            mk('靜脈留置導管 20G Intravenous Cannula 20G', 2),
+            mk('靜脈留置導管 22G Intravenous Cannula 22G', 2),
+            mk('靜脈留置導管 24G Intravenous Cannula 24G', 2),
+            mk('針咀 Needle 18G', 3),
+            mk('針咀 Needle 21G', 3),
+            mk('止血帶 Tourniquet', 2),
+            mk('靜脈留置導管透明膠紙 IV Dressing', 2),
+            mk('三路制 3-way stopcocks', 2),
+            mk('膠紙 Tape 1.25/2.5cm', 1),
+            mk('針筒 Syringe 3ml', 5),
+            mk('針筒 Syringe 5ml', 5),
+            mk('針筒 Syringe 10ml', 5),
+            mk('針筒 Syringe 20ml', 5),
+            mk('血氣分析針筒 Arterial Blood Gas Syringe', 3),
+            mk('肝素開 Heparin Lock', 3),
+            mk('靜脈輸液延長管建注射帽 (藍豆) Extension set, smallbore with clave', 2),
+            mk('酒精棉片 Alcohol Pad', 20),
+            mk('一次性無菌刀連刀柄 Disposable sterile scalpel', 1)
+        ],
+        level3: [
+            mk('口咽管 No.2 Oropharyngeal airway No.2', 1),
+            mk('口咽管 No.3 Oropharyngeal airway No.3', 1),
+            mk('聲門上呼吸道 No.3 (LMA/i-Gel) No.3 ▲', 1),
+            mk('聲門上呼吸道 No.4 (LMA/i-Gel) No.4 ▲', 1),
+            mk('氣管內管 Fr. 6 Endotracheal tube Fr. 6', 3),
+            mk('氣管內管 Fr. 6.5 Endotracheal tube Fr. 6.5', 3),
+            mk('氣管內管 Fr. 7 Endotracheal tube Fr. 7', 3),
+            mk('氣管內管 Fr. 7.5 Endotracheal tube Fr. 7.5', 3),
+            mk('氣管內管 Fr. 8 Endotracheal tube Fr. 8', 3),
+            mk('氣管內管 Fr. 8.5 Endotracheal tube Fr. 8.5', 3),
+            mk('插管引子 Intubating stylet', 3),
+            mk('舌鉗 (馬焦氏鉗) Magill Forceps', 1),
+            mk('無菌水溶性潤滑劑 Sterile Lubricant jelly', 3),
+            mk('針筒 20mL Syringe', 2),
+            mk('一次性喉鏡手柄保護套 Disposable handle protect cover', 1),
+            mk('鼻咽管 No.7 Nasopharyngeal airway No.7', 1),
+            mk('鼻咽管 No.8 Nasopharyngeal airway No.8', 1),
+            mk('喉鏡 No.3 handle with curved blade No.3', 1),
+            mk('喉鏡 No.4 handle with curved blade No.4', 1),
+            mk('無菌手套 No.6 Sterile gloves No.6', 2),
+            mk('無菌手套 No.6.5 Sterile gloves No.6.5', 2),
+            mk('無菌手套 No.7 Sterile gloves No.7', 2),
+            mk('無菌手套 No.7.5 Sterile gloves No.7.5', 2),
+            mk('無菌手套 No.8 Sterile gloves No.8', 2),
+            mk('氧氣延長管 Oxygen extension tube', 1),
+            mk('楊克氏抽吸硬管 Yankauer ▲', 2),
+            mk('白扁帶 white cotton tape', 1),
+            mk('咬口膠 ETT protector', 1),
+            mk('Size C 電池 Battery', 2)
+        ],
+        level4: [
+            mk('無菌紗布 Sterile gauze 7.5×7.5cm', 3),
+            mk('無菌紗布 Sterile gauze 10×10cm', 3),
+            mk('優碘 Betadine Solution', 1),
+            mk('一次性換藥包 Disposable dressing kit', 1),
+            mk('一次性圍裙 Disposable apron', 2),
+            mk('防護面罩 FaceShield', 2),
+            mk('手套盒 L size Gloves (L size)', 1),
+            mk('手套盒 S size Gloves (S size)', 1)
+        ]
+    };
+    const sectionNames = {};
+    SECTION_DEFS.forEach(sec => { sectionNames[sec.key] = sec.name; });
+    const sectionOrder = SECTION_DEFS.map(sec => sec.key);
+    return { id: genId('cart'), name, items, sectionNames, sectionOrder };
+}
+
+/* ============================================================
+   localStorage
+   ============================================================ */
+const STORAGE_KEY = 'firstAidCartData_v1';
+const LOG_KEY = 'firstAidCartLogs_v1';
+const USER_KEY = 'firstAidCartCurrentUser_v1';
+const LOG_MAX_DAYS = 90;
+
+// ⚠️ 2. 这里填入你刚才在「安全规则」里设定的暗号（例如 "MySecret123"）
+const DEVICE_SECRET = "radiuser@ssm#FirstAidCar"; 
+
+// 取代原本的 loadFromLocalStorage
+async function loadFromLocalStorage() {
+    try {
+        if (!window.firebaseAPI) {
+            await new Promise(resolve => setTimeout(resolve, 500)); // 等待模组加载
+        }
+        const { doc, getDoc, db } = window.firebaseAPI;
+        const docRef = doc(db, "carts", "main");
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            return data.carts || []; // 只回传 carts 数组
+        } else {
+            return null; // 云端没有数据
+        }
+    } catch (error) {
+        console.error("读取 Firebase 失败:", error);
+        alert("读取云端数据失败，请检查网络！");
+        return null;
+    }
+}
+
+// 取代原本的 saveToLocalStorage
+async function saveToLocalStorage() {
+    try {
+        if (!window.firebaseAPI) return;
+        const { doc, setDoc, db } = window.firebaseAPI;
+        const docRef = doc(db, "carts", "main");
+        
+        // 将整个 carts 数组和暗号一起保存
+        await setDoc(docRef, {
+            carts: carts,
+            deviceSecret: DEVICE_SECRET
+        });
+        console.log("✅ 资料已同步至云端");
+    } catch (error) {
+        console.error("❌ 保存到 Firebase 失败:", error);
+        alert("保存失败！可能是网络问题，或暗号与安全规则不一致。");
+    }
+}
+
+function isLogExpired(log) {
+    if (!log || !log.time) return true;
+    const t = new Date(log.time).getTime();
+    if (isNaN(t)) return true;
+    const cutoff = Date.now() - LOG_MAX_DAYS * 24 * 60 * 60 * 1000;
+    return t < cutoff;
+}
+function loadLogs() {
+    try {
+        const raw = localStorage.getItem(LOG_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return [];
+        const valid = arr.filter(log => !isLogExpired(log));
+        if (valid.length !== arr.length) {
+            try { localStorage.setItem(LOG_KEY, JSON.stringify(valid)); } catch (e) {}
+        }
+        return valid;
+    } catch (e) { return []; }
+}
+function saveLogs(logs) {
+    try {
+        const valid = logs.filter(log => !isLogExpired(log));
+        localStorage.setItem(LOG_KEY, JSON.stringify(valid));
+    } catch (e) {}
+}
+function addLog(action, target, detail) {
+    const logs = loadLogs();
+    logs.push({
+        time: new Date().toISOString(),
+        user: currentUser || '未知',
+        action: action,
+        target: target,
+        detail: detail
+    });
+    if (logs.length > 2000) logs.splice(0, logs.length - 2000);
+    saveLogs(logs);
+}
+
+let carts = []; // 先定义为空
+
+async function initSystem() {
+    // 1. 尝试从云端拉取数据
+    const cloudData = await loadFromLocalStorage();
+    
+    if (cloudData && cloudData.length > 0) {
+        carts = cloudData;
+        console.log("已从云端载入最新数据");
+    } else {
+        // 2. 云端没数据（第一次使用），执行原本的初始化逻辑
+        carts = [
+            createFullCart('DSA 急救車'),
+            createFullCart('RC CT 急救車'),
+            createFullCart('ER CT 急救車'),
+            createFullCart('ER DSA 急救車'),
+            createFullCart('新大樓CT 急救車'),
+            createFullCart('7號房 急救車')
+        ];
+        
+        // 执行原本的日期生成逻辑
+        const today = new Date();
+        const d = (offset) => {
+            const dt = new Date(today);
+            dt.setDate(dt.getDate() + offset);
+            return dt.toISOString().slice(0, 10);
+        };
+        carts.forEach((cart, ci) => {
+            const sec = cart.items;
+            sec.top[0].expiry = d(200 + ci * 10);
+            sec.top[2].expiry = d(45 + ci * 5);
+            sec.top[3].expiry = d(20 + ci * 3);
+            sec.level2[0].expiry = d(120 + ci * 8);
+            sec.level2[6].expiry = d(75 + ci * 2);
+            sec.level3[0].expiry = d(300 + ci * 15);
+            sec.level3[5].expiry = d(25 + ci * 4);
+            sec.level4[0].expiry = d(60 + ci * 3);
+            sec.level4[2].expiry = d(15 + ci * 2);
+        });
+
+        console.log("建立预设数据...");
+        await saveToLocalStorage(); // 第一次建立后，推送到云端
+    }
+
+    // 3. 数据准备好后，启动系统
+    window.addEventListener('DOMContentLoaded', () => {
+        applyFontSize(loadFontSize());
+        initLogin();
+    });
+}
+
+// 执行初始化
+initSystem();
+
+/* ============================================================
+   工具函式
+   ============================================================ */
+function genId(prefix) { return prefix + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6); }
+
+function daysUntil(dateStr) {
+    if (!dateStr || dateStr.trim() === '') return Infinity;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const target = new Date(dateStr);
+    if (isNaN(target)) return Infinity;
+    target.setHours(0,0,0,0);
+    return Math.ceil((target - today) / 86400000);
+}
+
+function isNonExpiring(dateStr) {
+    return !dateStr || dateStr.trim() === '' || daysUntil(dateStr) === Infinity;
+}
+
+function getDateSegHighlight(dateStr) {
+    if (isNonExpiring(dateStr)) return '';
+    const days = daysUntil(dateStr);
+    if (days < 30) return 'danger';
+    if (days < 90) return 'warning';
+    return '';
+}
+
+function getRowHighlightClass(item) {
+    if (item.outOfStock) return 'row-outofstock';
+    const dateStr = item.expiry;
+    if (isNonExpiring(dateStr)) return '';
+    const days = daysUntil(dateStr);
+    if (days < 30) return 'row-danger';
+    if (days < 90) return 'row-warning';
+    return '';
+}
+
+function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+function formatTime(iso) {
+    try {
+        const d = new Date(iso);
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    } catch (e) { return iso; }
+}
+
+function countCartStats(cart) {
+    let warningCount = 0, dangerCount = 0, oosCount = 0;
+    Object.keys(cart.items).forEach(k => {
+        (cart.items[k] || []).forEach(item => {
+            if (item.outOfStock) { oosCount++; return; }
+            if (isNonExpiring(item.expiry)) return;
+            const d = daysUntil(item.expiry);
+            if (d < 30) dangerCount++;
+            else if (d < 90) warningCount++;
+        });
+    });
+    return { warningCount, dangerCount, oosCount };
+}
+
+/* ============================================================
+   日期工具
+   ============================================================ */
+function getLastDayOfMonth(year, month) {
+    return new Date(year, month, 0).getDate();
+}
+function parseDateStr(s) {
+    if (!s || typeof s !== 'string') return { y: '', m: '', d: '' };
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return { y: '', m: '', d: '' };
+    return { y: m[1], m: String(parseInt(m[2], 10)), d: String(parseInt(m[3], 10)) };
+}
+function formatDateStr(y, m, d) {
+    if (!y || !m || !d) return '';
+    const pad = n => String(n).padStart(2, '0');
+    return `${y}-${pad(m)}-${pad(d)}`;
+}
+
+/* ============================================================
+   每月 15 日工具
+   ============================================================ */
+function getNext15thDate() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    const d = today.getDate();
+    if (d <= 15) {
+        return { y, m: m + 1, d: 15 };
+    } else {
+        const next = new Date(y, m + 1, 1);
+        return { y: next.getFullYear(), m: next.getMonth() + 1, d: 15 };
+    }
+}
+
+function generateMonth15Options(count = 12) {
+    const base = getNext15thDate();
+    const options = [];
+    for (let i = 0; i < count; i++) {
+        const dt = new Date(base.y, base.m - 1 + i, 15);
+        options.push({
+            y: dt.getFullYear(),
+            m: dt.getMonth() + 1,
+            d: 15
+        });
+    }
+    return options;
+}
+
+function formatMonth15Label(opt) {
+    const m = String(opt.m).padStart(2, '0');
+    return `${opt.y}/${m}/15`;
+}
+
+function formatYMD(opt) {
+    const m = String(opt.m).padStart(2, '0');
+    const d = String(opt.d).padStart(2, '0');
+    return `${opt.y}-${m}-${d}`;
+}
+
+function collectItemsWithin90Days(targetDateStr) {
+    const rows = [];
+    carts.forEach(cart => {
+        Object.keys(cart.items).forEach(k => {
+            const secName = (cart.sectionNames && cart.sectionNames[k]) || k;
+            (cart.items[k] || []).forEach(item => {
+                if (item.outOfStock) {
+                    rows.push({
+                        cartName: cart.name,
+                        sectionName: secName,
+                        itemName: item.name,
+                        quantity: item.quantity,
+                        expiry: '缺貨',
+                        days: -9999,
+                        daysFromToday: -9999,
+                        outOfStock: true,
+                        targetDate: targetDateStr,
+                        note: item.note || ''
+                    });
+                    return;
+                }
+                if (isNonExpiring(item.expiry)) return;
+                const target = new Date(targetDateStr); target.setHours(0,0,0,0);
+                const exp = new Date(item.expiry); exp.setHours(0,0,0,0);
+                const diffDays = Math.round((exp - target) / 86400000);
+                if (diffDays < 90) {
+                    rows.push({
+                        cartName: cart.name,
+                        sectionName: secName,
+                        itemName: item.name,
+                        quantity: item.quantity,
+                        expiry: item.expiry,
+                        days: diffDays,
+                        daysFromToday: daysUntil(item.expiry),
+                        outOfStock: false,
+                        targetDate: targetDateStr,
+                        note: item.note || ''
+                    });
+                }
+            });
+        });
+    });
+    return rows;
+}
+
+function groupMonth15RowsByCart(rows, sortBy) {
+    const groups = new Map();
+    const order = [];
+    carts.forEach(c => {
+        if (!order.includes(c.name)) order.push(c.name);
+    });
+    rows.forEach(r => {
+        if (!groups.has(r.cartName)) groups.set(r.cartName, []);
+        groups.get(r.cartName).push(r);
+    });
+    for (const [k, arr] of groups.entries()) {
+        if (sortBy === 'name') {
+            arr.sort((a, b) => {
+                if (a.outOfStock && !b.outOfStock) return -1;
+                if (!a.outOfStock && b.outOfStock) return 1;
+                return a.itemName.localeCompare(b.itemName, 'zh-Hant');
+            });
+        } else {
+            arr.sort((a, b) => {
+                if (a.outOfStock && !b.outOfStock) return -1;
+                if (!a.outOfStock && b.outOfStock) return 1;
+                return (a.expiry || '').localeCompare(b.expiry || '');
+            });
+        }
+    }
+    const orderedGroups = order
+        .filter(name => groups.has(name))
+        .map(name => ({ name, items: groups.get(name) }));
+    for (const [k, arr] of groups.entries()) {
+        if (!order.includes(k)) orderedGroups.push({ name: k, items: arr });
+    }
+    return orderedGroups;
+}
+
+/* ============================================================
+   狀態
+   ============================================================ */
+let activeTab = 'overview';
+let currentCartIndex = 0;
+let templateArrayBuffer = null;
+let templateFileName = '';
+let currentUser = '';
+let adminUnlocked = false;
+let draggedCartIndex = null;
+let selectedMonth15 = null;
+let month15OnlyUnder30 = false;
+let month15SortBy = 'date';
+
+(function initMonth15() {
+    const base = getNext15thDate();
+    selectedMonth15 = formatYMD(base);
+})();
+
+/* ============================================================
+   登入
+   ============================================================ */
+function initLogin() {
+    const overlay = document.getElementById('loginOverlay');
+    const input = document.getElementById('loginInput');
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('loginError');
+
+    const saved = sessionStorage.getItem(USER_KEY);
+    if (saved) {
+        currentUser = saved;
+        enterApp();
+        return;
+    }
+
+    function doLogin() {
+        const val = input.value.trim();
+        if (!val) { err.textContent = '請輸入工號'; return; }
+        if (!/^0\d{6}$/.test(val)) { err.textContent = '工號格式不正確，請重新輸入。'; return; }
+        currentUser = val;
+        sessionStorage.setItem(USER_KEY, val);
+        addLog('login', '系統', `${val} 登入系統`);
+        enterApp();
+    }
+
+    btn.addEventListener('click', doLogin);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    input.focus();
+}
+
+function enterApp() {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'block';
+    const userNameEl = document.getElementById('currentUser');
+    userNameEl.textContent = `👤 ${currentUser}`;
+    if (isFullAccessUser(currentUser)) userNameEl.classList.add('full-access');
+    else userNameEl.classList.remove('full-access');
+    applyFontSize(loadFontSize());
+    render();
+    initGlobalListeners();
+    updateTemplateHint();
+    autoLoadTemplate();
+}
+
+function logout() {
+    if (!confirm('確定要登出嗎？')) return;
+    addLog('login', '系統', `${currentUser} 登出系統`);
+    sessionStorage.removeItem(USER_KEY);
+    location.reload();
+}
+
+/* ============================================================
+   密碼驗證
+   ============================================================ */
+function requestAdminPassword() {
+    if (isFullAccessUser(currentUser)) return true;
+    if (adminUnlocked) return true;
+    const pwd = prompt('請輸入密碼以進入管理功能：');
+    if (pwd === null) return false;
+    if (pwd !== 'admin') { alert('密碼錯誤，無法進入管理功能。'); return false; }
+    adminUnlocked = true;
+    return true;
+}
+function requestDeletePassword() {
+    if (isFullAccessUser(currentUser)) return true;
+    const pwd = prompt('請輸入密碼以刪除這台急救車：');
+    if (pwd === null) return false;
+    if (pwd !== 'admin') { alert('密碼錯誤，無法刪除。'); return false; }
+    return true;
+}
+
+/* ============================================================
+   渲染頁籤
+   ============================================================ */
+function renderTabs() {
+    const container = document.getElementById('tabsContainer');
+    let html = '';
+    carts.forEach((cart, i) => {
+        const active = activeTab === 'cart:' + i ? 'active' : '';
+        html += `<button class="tab-btn draggable-cart ${active}" 
+                         draggable="true"
+                         data-tab="cart:${i}"
+                         data-index="${i}"
+                         title="可拖曳調整順序">🚑 ${escapeHtml(cart.name)}</button>`;
+    });
+    const alertCount = countExpiringItems(90);
+    const alertActive = activeTab === 'overview' ? 'active' : '';
+    const alertClass = alertCount > 0 ? 'tab-alert' : '';
+    html += `<button class="tab-btn ${alertClass} ${alertActive}" data-tab="overview">📅 每月 15 日即將過期物品清單 (${alertCount})</button>`;
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.getAttribute('data-tab');
+            activeTab = tab;
+            if (activeTab.startsWith('cart:')) {
+                currentCartIndex = parseInt(activeTab.split(':')[1], 10);
+            }
+            render();
+        });
+    });
+
+    container.querySelectorAll('.draggable-cart').forEach(btn => {
+        btn.addEventListener('dragstart', e => {
+            draggedCartIndex = parseInt(btn.getAttribute('data-index'), 10);
+            btn.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            try { e.dataTransfer.setData('text/plain', String(draggedCartIndex)); } catch (err) {}
+        });
+        btn.addEventListener('dragend', () => {
+            btn.classList.remove('dragging');
+            container.querySelectorAll('.draggable-cart').forEach(b => b.classList.remove('drag-over'));
+        });
+        btn.addEventListener('dragover', e => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (draggedCartIndex === null) return;
+            const overIndex = parseInt(btn.getAttribute('data-index'), 10);
+            if (overIndex === draggedCartIndex) return;
+            btn.classList.add('drag-over');
+        });
+        btn.addEventListener('dragleave', () => btn.classList.remove('drag-over'));
+        btn.addEventListener('drop', e => {
+            e.preventDefault();
+            btn.classList.remove('drag-over');
+            if (draggedCartIndex === null) return;
+            const dropIndex = parseInt(btn.getAttribute('data-index'), 10);
+            if (isNaN(dropIndex) || dropIndex === draggedCartIndex) {
+                draggedCartIndex = null;
+                return;
+            }
+            const activeCartId = (activeTab.startsWith('cart:') && carts[currentCartIndex])
+                ? carts[currentCartIndex].id : null;
+            const moved = carts.splice(draggedCartIndex, 1)[0];
+            carts.splice(dropIndex, 0, moved);
+            saveToLocalStorage();
+            addLog('update', '急救車排序',
+                `將「${moved.name}」從第 ${draggedCartIndex + 1} 位移到第 ${dropIndex + 1} 位`);
+            if (activeCartId) {
+                const newIdx = carts.findIndex(c => c.id === activeCartId);
+                if (newIdx >= 0) { activeTab = 'cart:' + newIdx; currentCartIndex = newIdx; }
+            }
+            draggedCartIndex = null;
+            render();
+        });
+    });
+}
+
+function countExpiringItems(days) {
+    let count = 0;
+    carts.forEach(cart => {
+        Object.keys(cart.items).forEach(k => {
+            (cart.items[k] || []).forEach(item => {
+                if (item.outOfStock) { count++; return; }
+                if (isNonExpiring(item.expiry)) return;
+                const d = daysUntil(item.expiry);
+                if (d < days) count++;
+            });
+        });
+    });
+    return count;
+}
+
+/* ============================================================
+   渲染單部急救車頁面
+   ============================================================ */
+function renderCartPage() {
+    const cart = carts[currentCartIndex];
+    if (!cart) return `<div class="empty-state">找不到急救車</div>`;
+
+    const stats = countCartStats(cart);
+    let statsBadges = '';
+    if (stats.warningCount > 0) statsBadges += `<span class="badge-warning">⏳ ${stats.warningCount} 項 &lt;90天</span>`;
+    if (stats.dangerCount > 0) statsBadges += `<span class="badge-danger pulse">🔴 ${stats.dangerCount} 項 &lt;30天</span>`;
+    if (stats.oosCount > 0) statsBadges += `<span class="badge-danger">📦 ${stats.oosCount} 項 缺貨</span>`;
+
+    let html = `
+        <div class="cart-card">
+            <div class="cart-header">
+                <div class="cart-title">
+                    <input class="cart-name" type="text" value="${escapeHtml(cart.name)}" 
+                           data-cart-id="${cart.id}" data-field="name" placeholder="急救車名稱">
+                    <div class="cart-meta">
+                        <span>📦 物品 ${countCartItems(cart)} 項</span>
+                        ${statsBadges}
+                    </div>
+                </div>
+                <div class="cart-actions">
+                    <button class="btn btn-danger delete-cart" data-cart-id="${cart.id}">🗑 刪除車</button>
+                </div>
+            </div>
+    `;
+
+    const order = (cart.sectionOrder && Array.isArray(cart.sectionOrder))
+        ? cart.sectionOrder
+        : Object.keys(cart.items);
+
+    order.forEach((secKey, idx) => {
+        if (!cart.items[secKey]) return;
+        const items = cart.items[secKey] || [];
+        const secName = (cart.sectionNames && cart.sectionNames[secKey]) || secKey;
+        const isFirst = idx === 0;
+        const isLast = idx === order.length - 1;
+
+        html += `
+            <div class="section-header">
+                <input class="section-title-input" type="text" 
+                       value="${escapeHtml(secName)}"
+                       data-cart-id="${cart.id}" data-section-key="${secKey}" data-field="sectionName"
+                       title="可直接修改區域名稱">
+                <div class="section-actions">
+                    <button class="btn btn-sm btn-move move-section-up" 
+                            data-cart-id="${cart.id}" data-section="${secKey}"
+                            ${isFirst ? 'disabled' : ''} title="區域上移">↑</button>
+                    <button class="btn btn-sm btn-move move-section-down" 
+                            data-cart-id="${cart.id}" data-section="${secKey}"
+                            ${isLast ? 'disabled' : ''} title="區域下移">↓</button>
+                    <button class="btn btn-sm add-item-to-section" data-cart-id="${cart.id}" data-section="${secKey}">＋ 新增物品</button>
+                    <button class="btn btn-sm btn-danger delete-section" data-cart-id="${cart.id}" data-section="${secKey}">🗑 刪除區域</button>
+                </div>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:24%">物品名稱</th>
+                            <th style="width:7%">數量</th>
+                            <th style="width:20%">有效日期 (年/月/日)</th>
+                            <th style="width:16%">備註</th>
+                            <th style="width:9%">缺貨</th>
+                            <th style="width:12%">狀態</th>
+                            <th style="width:6%">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        if (items.length === 0) {
+            html += `<tr><td colspan="7" style="text-align:center; padding:20px; color:#8aa9bb;">無物品</td></tr>`;
+        } else {
+            items.forEach(item => { html += renderItemRow(cart.id, secKey, item); });
+        }
+        html += `</tbody></table></div>`;
+    });
+
+    html += `
+        <div class="add-section-bar">
+            <button class="btn btn-primary add-section-btn" data-cart-id="${cart.id}">＋ 新增區域</button>
+        </div>
+    `;
+
+    html += `</div>`;
+    return html;
+}
+
+function countCartItems(cart) {
+    let n = 0;
+    Object.keys(cart.items).forEach(k => n += (cart.items[k] || []).length);
+    return n;
+}
+
+function renderItemRow(cartId, sectionKey, item) {
+    const segClass = getDateSegHighlight(item.expiry);
+    const rowClass = getRowHighlightClass(item);
+    const nonExpiring = isNonExpiring(item.expiry);
+    const daysLeft = nonExpiring ? Infinity : daysUntil(item.expiry);
+
+    let statusHtml = '';
+    let statusColor = '';
+    if (item.outOfStock) {
+        statusHtml = '缺貨';
+        statusColor = '#b33a3a';
+    } else if (nonExpiring) {
+        statusHtml = '<span class="no-expiry-badge">不會過期</span>';
+    } else if (daysLeft < 0) {
+        statusHtml = `已過期 ${Math.abs(daysLeft)} 天`;
+        statusColor = '#b33a3a';
+    } else {
+        statusHtml = `${daysLeft} 天`;
+        statusColor = daysLeft < 30 ? '#b33a3a' : (daysLeft < 90 ? '#b68b00' : '#2a4d62');
+    }
+
+    const oosChecked = item.outOfStock ? 'checked' : '';
+    const oosLabelClass = item.outOfStock ? 'oos-label checked' : 'oos-label';
+
+    const { y, m, d } = parseDateStr(item.expiry);
+
+    /* 判斷是否為急救藥物盒鎖匙，決定備註欄的 placeholder */
+    const isLockItem = sectionKey === 'level1' &&
+                       (item.name.includes('急救藥物盒鎖匙') || item.name.includes('Lock No'));
+    const notePlaceholder = isLockItem ? '請輸入藥盒編號' : '';
+
+    return `
+        <tr class="item-row ${rowClass}" data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}">
+            <td><input class="item-name-input" type="text" value="${escapeHtml(item.name)}" 
+                       data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="name"></td>
+            <td><input class="number-input qty-input" type="number" min="0" step="1" 
+                       value="${item.quantity}" data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="quantity"></td>
+            <td>
+                <div class="date-seg-group ${segClass}" 
+                     data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}">
+                    <input type="text" class="date-seg year" inputmode="numeric" maxlength="4"
+                           value="${y}"
+                           data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="dateYear"
+                           ${item.outOfStock ? 'disabled' : ''}>
+                    <span class="date-seg-sep">/</span>
+                    <input type="text" class="date-seg month" inputmode="numeric" maxlength="2"
+                           value="${m}"
+                           data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="dateMonth"
+                           ${item.outOfStock ? 'disabled' : ''}>
+                    <span class="date-seg-sep">/</span>
+                    <input type="text" class="date-seg day" inputmode="numeric" maxlength="2"
+                           value="${d}"
+                           data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="dateDay"
+                           ${item.outOfStock ? 'disabled' : ''}>
+                    <button class="date-seg-clear" 
+                            data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" 
+                            title="清空日期">✕</button>
+                </div>
+            </td>
+            <td>
+                <input class="note-input" type="text" 
+                       value="${escapeHtml(item.note || '')}"
+                       placeholder="${notePlaceholder}"
+                       data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="note">
+            </td>
+            <td>
+                <label class="${oosLabelClass}">
+                    <input type="checkbox" class="oos-checkbox" 
+                           data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}"
+                           ${oosChecked}>
+                    缺貨
+                </label>
+            </td>
+            <td style="font-weight:600; color:${statusColor}">${statusHtml}</td>
+            <td>
+                <div class="action-buttons">
+                    <button class="icon-btn delete-item" data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" title="刪除物品">🗑️</button>
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+/* ============================================================
+   渲染總覽頁面（只保留每月 15 日分則）
+   ============================================================ */
+function renderOverviewPage() {
+    let html = '';
+    html += renderMonth15Section();
+    return html;
+}
+
+/* 每月 15 日分則 */
+function renderMonth15Section() {
+    const options = generateMonth15Options(12);
+    if (!selectedMonth15) {
+        selectedMonth15 = formatYMD(options[0]);
+    }
+
+    let selectedOpt = options.find(o => formatYMD(o) === selectedMonth15) || options[0];
+    const targetDate = formatYMD(selectedOpt);
+
+    let rows = collectItemsWithin90Days(targetDate);
+
+    if (month15OnlyUnder30) {
+        rows = rows.filter(r => {
+            if (r.outOfStock) return true;
+            return r.days < 30;
+        });
+    }
+
+    const grouped = groupMonth15RowsByCart(rows, month15SortBy);
+
+    const oosCount = rows.filter(r => r.outOfStock).length;
+    const dangerCount = rows.filter(r => !r.outOfStock && r.days < 30).length;
+    const warningCount = rows.filter(r => !r.outOfStock && r.days >= 30 && r.days < 90).length;
+
+    const today = new Date(); today.setHours(0,0,0,0);
+    const targetDateObj = new Date(selectedOpt.y, selectedOpt.m - 1, selectedOpt.d);
+    const daysToTarget = Math.ceil((targetDateObj - today) / 86400000);
+
+    let html = `
+        <div class="month15-card">
+            <div class="month15-title">📅 每月 15 日即將過期物品清單</div>
+            <div class="month15-sub">以下列出「距離指定月份 15 日少於 90 天」的所有物品（含已過期、缺貨），依地點分類。</div>
+
+            <div class="month15-controls">
+                <label>選擇截止月份：</label>
+                <select id="month15Select">
+    `;
+    options.forEach(opt => {
+        const val = formatYMD(opt);
+        const label = formatMonth15Label(opt);
+        const sel = val === selectedMonth15 ? 'selected' : '';
+        html += `<option value="${val}" ${sel}>${label}</option>`;
+    });
+    html += `
+                </select>
+                <button class="btn btn-sm ${month15OnlyUnder30 ? 'btn-purple' : 'btn-purple-outline'}" id="month15Toggle30Btn">
+                    ${month15OnlyUnder30 ? '✓ 只顯示 <30 天' : '只顯示 <30 天'}
+                </button>
+                <button class="btn btn-sm ${month15SortBy === 'name' ? 'btn-purple' : 'btn-purple-outline'}" id="month15SortBtn">
+                    ${month15SortBy === 'name' ? '✓ 按物品名稱排序' : '按物品名稱排序'}
+                </button>
+                <span class="month15-countdown">
+                    距截止日：${daysToTarget >= 0 ? daysToTarget + ' 天' : '已過 ' + Math.abs(daysToTarget) + ' 天'}
+                </span>
+            </div>
+
+            <div class="month15-summary">
+                <div class="summary-box danger"><span class="num">${oosCount}</span>項 缺貨</div>
+                <div class="summary-box danger"><span class="num">${dangerCount}</span>項 &lt;30 天</div>
+                <div class="summary-box warning"><span class="num">${warningCount}</span>項 30–89 天</div>
+                <div class="summary-box total"><span class="num">${rows.length}</span>項 總計</div>
+            </div>
+    `;
+
+    if (rows.length === 0) {
+        html += `<div class="month15-empty">🎉 截至 ${formatMonth15Label(selectedOpt)} 前 90 天內，沒有即將過期或缺貨的物品</div>`;
+    } else {
+        grouped.forEach(group => {
+            html += `
+                <div class="month15-location-header">
+                    <span>🚑 ${escapeHtml(group.name)}</span>
+                    <span class="count-badge">${group.items.length} 項</span>
+                </div>
+                <div class="table-wrapper" style="padding:0;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width:18%">區域</th>
+                                <th style="width:22%">物品名稱</th>
+                                <th style="width:7%">數量</th>
+                                <th style="width:12%">有效日期</th>
+                                <th style="width:15%">備註</th>
+                                <th style="width:14%">狀態</th>
+                                <th style="width:12%">距截止日</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            group.items.forEach(r => {
+                let rowClass, statusText, statusColor, statusClass;
+                if (r.outOfStock) {
+                    rowClass = 'row-outofstock';
+                    statusText = '缺貨';
+                    statusColor = '#b33a3a';
+                    statusClass = 'status-danger';
+                } else if (r.days < 0) {
+                    rowClass = 'row-danger';
+                    statusText = `已過期 ${Math.abs(r.days)} 天`;
+                    statusColor = '#b33a3a';
+                    statusClass = 'status-danger';
+                } else if (r.days < 30) {
+                    rowClass = 'row-danger';
+                    statusText = `${r.days} 天`;
+                    statusColor = '#b33a3a';
+                    statusClass = 'status-danger';
+                } else if (r.days < 90) {
+                    rowClass = 'row-warning';
+                    statusText = `${r.days} 天`;
+                    statusColor = '#8a6d00';
+                    statusClass = 'status-warning';
+                } else {
+                    rowClass = '';
+                    statusText = `${r.days} 天`;
+                    statusColor = '#2a4d62';
+                    statusClass = '';
+                }
+                html += `
+                    <tr class="item-row ${rowClass}">
+                        <td style="font-size:0.9rem;">${escapeHtml(r.sectionName)}</td>
+                        <td>${escapeHtml(r.itemName)}</td>
+                        <td style="text-align:center;">${r.quantity}</td>
+                        <td>${r.expiry}</td>
+                        <td class="note-cell">${escapeHtml(r.note || '')}</td>
+                        <td class="${statusClass}" style="color:${statusColor};">${statusText}</td>
+                        <td style="font-size:0.85rem; color:#6b8a9c;">${r.outOfStock ? '—' : (r.days >= 0 ? r.days + ' 天' : '已過 ' + Math.abs(r.days) + ' 天')}</td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table></div>`;
+        });
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+/* ============================================================
+   渲染管理功能頁面
+   ============================================================ */
+function renderAdminPage() {
+    const logs = loadLogs();
+    const sorted = logs.slice().reverse();
+
+    const itemNameSet = new Set();
+    carts.forEach(cart => {
+        Object.keys(cart.items).forEach(k => {
+            (cart.items[k] || []).forEach(it => itemNameSet.add(it.name));
+        });
+    });
+    const allItemNames = Array.from(itemNameSet).sort();
+
+    let html = `
+        <div class="admin-card">
+            <div class="admin-title">⚙️ 管理功能</div>
+            <div class="admin-sub">以下功能需謹慎操作，所有動作都會記錄在修改記錄中。修改記錄保留 90 天，逾期自動刪除。</div>
+
+            <div class="admin-section">
+                <div class="admin-section-title">💾 資料備份（匯出 / 匯入）</div>
+                <div class="admin-hint">
+                    匯出可將<b>所有急救車</b>的完整資料存成 JSON 備份檔（含車名、區域名稱、物品、數量、有效日期、缺貨狀態、備註、鎖匙編號）。<br>
+                    匯入時可選擇「<b>覆蓋全部</b>」或「<b>合併新增</b>」。建議每次修改後定期匯出備份。
+                </div>
+                <div class="admin-actions">
+                    <button class="btn btn-export" id="exportAllJsonBtn">📤 匯出全部資料（JSON）</button>
+                    <button class="btn btn-warning" id="importJsonBtn">📥 匯入 JSON 備份</button>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <div class="admin-section-title">➕ 批量新增急救車</div>
+                <div class="admin-hint">輸入數量與名稱前綴，系統會自動編號（例如：急救車-01、急救車-02）。</div>
+                <div class="admin-form">
+                    <label>數量：</label>
+                    <input type="number" id="batchAddCount" min="1" max="50" value="1" style="width:100px;">
+                    <label>名稱前綴：</label>
+                    <input type="text" id="batchAddPrefix" placeholder="急救車" value="急救車" style="width:200px;">
+                    <button class="btn btn-primary" id="batchAddBtn">批量新增</button>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <div class="admin-section-title">🗑 批量刪除急救車</div>
+                <div class="admin-hint">勾選要刪除的急救車，點「批量刪除」即可一次刪除。</div>
+                <div class="table-wrapper" style="padding:0;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;"><input type="checkbox" class="admin-checkbox" id="batchDeleteAll"></th>
+                                <th>急救車名稱</th>
+                                <th>ID</th>
+                                <th style="width:120px;">物品數</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    `;
+    if (carts.length === 0) {
+        html += `<tr><td colspan="4" style="text-align:center; color:#8aa9bb; padding:20px;">目前沒有急救車</td></tr>`;
+    } else {
+        carts.forEach(cart => {
+            html += `
+                <tr>
+                    <td><input type="checkbox" class="admin-checkbox batch-delete-cart" value="${cart.id}"></td>
+                    <td>${escapeHtml(cart.name)}</td>
+                    <td class="cart-id-cell">${escapeHtml(cart.id)}</td>
+                    <td>${countCartItems(cart)}</td>
+                </tr>
+            `;
+        });
+    }
+    html += `
+                        </tbody>
+                    </table>
+                </div>
+                <div class="admin-actions">
+                    <button class="btn btn-danger" id="batchDeleteBtn">🗑 批量刪除</button>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <div class="admin-section-title">📅 批量修改物品有效日期</div>
+                <div class="admin-hint">選擇一個物品，勾選要套用的急救車，輸入新日期後點「套用」。</div>
+                <div class="admin-form">
+                    <label>物品：</label>
+                    <select id="batchItemSelect" style="padding:10px 14px; border:1px solid #cbdae3; border-radius:10px; font-size:1rem; min-width:280px;">
+                        <option value="">-- 請選擇物品 --</option>
+    `;
+    allItemNames.forEach(n => {
+        html += `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`;
+    });
+    html += `
+                    </select>
+                    <label>新有效日期：</label>
+                    <input type="date" id="batchNewDate" style="padding:10px 14px; border:1px solid #cbdae3; border-radius:10px; font-size:1rem;">
+                </div>
+                <div class="admin-hint">勾選要套用的急救車：</div>
+                <div class="table-wrapper" style="padding:0;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;"><input type="checkbox" class="admin-checkbox" id="batchDateAll"></th>
+                                <th>急救車名稱</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    `;
+    if (carts.length === 0) {
+        html += `<tr><td colspan="2" style="text-align:center; color:#8aa9bb; padding:20px;">目前沒有急救車</td></tr>`;
+    } else {
+        carts.forEach(cart => {
+            html += `
+                <tr>
+                    <td><input type="checkbox" class="admin-checkbox batch-date-cart" value="${cart.id}"></td>
+                    <td>${escapeHtml(cart.name)}</td>
+                </tr>
+            `;
+        });
+    }
+    html += `
+                        </tbody>
+                    </table>
+                </div>
+                <div class="admin-actions">
+                    <button class="btn btn-primary" id="batchDateBtn">📅 套用</button>
+                </div>
+            </div>
+    `;
+
+    if (isSuperAdmin(currentUser)) {
+        html += `
+            <div class="admin-section">
+                <div class="admin-section-title">👥 完全存取用戶管理</div>
+                <div class="admin-hint">完全存取用戶進入管理功能與刪除車時不需輸入密碼。可新增或移除。</div>
+                <div class="admin-form">
+                    <label>工號：</label>
+                    <input type="text" id="addFullAccessInput" placeholder="請輸入 7 位工號" maxlength="7" style="width:200px;">
+                    <button class="btn btn-primary" id="addFullAccessBtn">新增</button>
+                </div>
+                <div class="table-wrapper" style="padding:0;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>工號</th>
+                                <th style="width:120px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        if (fullAccessUsers.length === 0) {
+            html += `<tr><td colspan="2" style="text-align:center; color:#8aa9bb; padding:20px;">目前沒有完全存取用戶</td></tr>`;
+        } else {
+            fullAccessUsers.forEach(u => {
+                html += `
+                    <tr>
+                        <td><strong>${escapeHtml(u)}</strong></td>
+                        <td>
+                            <button class="btn btn-sm btn-danger remove-full-access" data-user="${escapeHtml(u)}">移除</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `
+            <div class="admin-section">
+                <div class="admin-section-title">📋 修改記錄</div>
+                <div class="admin-sub" style="margin-bottom:14px;">共 ${logs.length} 筆（保留 90 天，最多 2000 筆）。</div>
+    `;
+
+    if (sorted.length === 0) {
+        html += `<div class="log-empty">目前沒有修改記錄</div>`;
+    } else {
+        html += `<div class="table-wrapper" style="padding:0;">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th style="width:170px;">時間</th>
+                        <th style="width:110px;">工號</th>
+                        <th style="width:100px;">動作</th>
+                        <th style="width:150px;">對象</th>
+                        <th>詳細內容</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        sorted.forEach(log => {
+            const actionLabel = {
+                create: '新增',
+                update: '修改',
+                delete: '刪除',
+                login: '登入/登出'
+            }[log.action] || log.action;
+            const actionClass = {
+                create: 'create',
+                update: 'update',
+                delete: 'delete',
+                login: 'login'
+            }[log.action] || 'login';
+
+            html += `
+                <tr>
+                    <td style="white-space:nowrap;">${formatTime(log.time)}</td>
+                    <td><strong>${escapeHtml(log.user)}</strong></td>
+                    <td><span class="log-action ${actionClass}">${actionLabel}</span></td>
+                    <td>${escapeHtml(log.target)}</td>
+                    <td>${escapeHtml(log.detail)}</td>
+                </tr>
+            `;
+        });
+        html += `</tbody></table></div>`;
+    }
+
+    html += `
+            </div>
+        </div>
+    `;
+    return html;
+}
+
+/* ============================================================
+   主渲染
+   ============================================================ */
+function render() {
+    document.getElementById('cartCount').innerText = `${carts.length} 台`;
+    renderTabs();
+
+    const container = document.getElementById('pageContainer');
+    if (activeTab === 'overview') {
+        container.innerHTML = renderOverviewPage();
+        const sel = document.getElementById('month15Select');
+        if (sel) {
+            sel.addEventListener('change', () => {
+                selectedMonth15 = sel.value;
+                render();
+            });
+        }
+        const toggleBtn = document.getElementById('month15Toggle30Btn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                month15OnlyUnder30 = !month15OnlyUnder30;
+                render();
+            });
+        }
+        const sortBtn = document.getElementById('month15SortBtn');
+        if (sortBtn) {
+            sortBtn.addEventListener('click', () => {
+                month15SortBy = (month15SortBy === 'name') ? 'date' : 'name';
+                render();
+            });
+        }
+    } else if (activeTab === 'admin') {
+        container.innerHTML = renderAdminPage();
+        initAdminListeners();
+    } else {
+        if (carts.length === 0) {
+            container.innerHTML = `<div class="empty-state">🚑 尚無急救車，點擊「新增急救車」開始</div>`;
+            return;
+        }
+        if (currentCartIndex >= carts.length) currentCartIndex = carts.length - 1;
+        if (currentCartIndex < 0) currentCartIndex = 0;
+        container.innerHTML = renderCartPage();
+    }
+}
+
+/* ============================================================
+   匯出全部 JSON
+   ============================================================ */
+function exportAllToJson() {
+    const backup = {
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        exportedBy: currentUser || '未知',
+        carts: carts.map(cart => ({
+            id: cart.id,
+            name: cart.name,
+            sectionNames: cart.sectionNames || {},
+            sectionOrder: cart.sectionOrder || Object.keys(cart.items),
+            items: Object.keys(cart.items).reduce((acc, k) => {
+                acc[k] = (cart.items[k] || []).map(it => ({
+                    id: it.id,
+                    name: it.name,
+                    quantity: it.quantity,
+                    expiry: it.expiry || '',
+                    outOfStock: !!it.outOfStock,
+                    note: it.note || '',
+                    lockNo: it.lockNo || ''
+                }));
+                return acc;
+            }, {})
+        }))
+    };
+
+    const json = JSON.stringify(backup, null, 2);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+    const filename = `急救車全部備份_${new Date().toISOString().slice(0,10)}.json`;
+    safeSaveAs(blob, filename);
+    addLog('update', '備份', `匯出全部資料備份（${carts.length} 台）`);
+    alert(`已匯出全部資料備份：${filename}\n共 ${carts.length} 台急救車`);
+}
+
+/* ============================================================
+   匯入 JSON
+   ============================================================ */
+function importFromJson(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const text = e.target.result;
+            const data = JSON.parse(text);
+
+            let incomingCarts = null;
+            if (Array.isArray(data)) {
+                incomingCarts = data;
+            } else if (data && Array.isArray(data.carts)) {
+                incomingCarts = data.carts;
+            }
+
+            if (!incomingCarts || incomingCarts.length === 0) {
+                alert('匯入失敗：檔案內容不是有效的備份格式（找不到 carts 陣列）。');
+                return;
+            }
+
+            const validCarts = [];
+            incomingCarts.forEach((c, idx) => {
+                if (!c || typeof c !== 'object') return;
+                if (!c.items || typeof c.items !== 'object') return;
+                const newId = c.id || genId('cart');
+                const items = {};
+                Object.keys(c.items).forEach(k => {
+                    const arr = Array.isArray(c.items[k]) ? c.items[k] : [];
+                    items[k] = arr.map(it => ({
+                        id: it.id || genId('item'),
+                        name: it.name || '未命名物品',
+                        quantity: typeof it.quantity === 'number' ? it.quantity : (parseInt(it.quantity, 10) || 0),
+                        expiry: it.expiry || '',
+                        outOfStock: !!it.outOfStock,
+                        note: it.note || '',
+                        lockNo: it.lockNo || ''
+                    }));
+                });
+                const sectionNames = c.sectionNames && typeof c.sectionNames === 'object' ? { ...c.sectionNames } : {};
+                Object.keys(items).forEach(k => {
+                    if (!sectionNames[k]) {
+                        const def = SECTION_DEFS.find(s => s.key === k);
+                        sectionNames[k] = def ? def.name : k;
+                    }
+                });
+                let sectionOrder = Array.isArray(c.sectionOrder) ? c.sectionOrder.slice() : Object.keys(items);
+                Object.keys(items).forEach(k => {
+                    if (!sectionOrder.includes(k)) sectionOrder.push(k);
+                });
+                sectionOrder = sectionOrder.filter(k => items[k] !== undefined);
+                validCarts.push({
+                    id: newId,
+                    name: c.name || `匯入的急救車 ${idx + 1}`,
+                    items,
+                    sectionNames,
+                    sectionOrder
+                });
+            });
+
+            if (validCarts.length === 0) {
+                alert('匯入失敗：沒有有效的急救車資料。');
+                return;
+            }
+
+            const mode = confirm(
+                `讀取到 ${validCarts.length} 台急救車。\n\n` +
+                `按「確定」→ 覆蓋全部（清空現有資料，改用備份檔）\n` +
+                `按「取消」→ 合併新增（保留現有資料，把備份檔的車加進去）`
+            );
+
+            if (mode) {
+                carts = validCarts;
+                saveToLocalStorage();
+                addLog('update', '備份', `匯入 JSON 備份（覆蓋全部，共 ${validCarts.length} 台）`);
+                alert(`已覆蓋全部資料，共 ${validCarts.length} 台急救車。`);
+            } else {
+                validCarts.forEach(c => {
+                    if (carts.some(x => x.id === c.id)) {
+                        c.id = genId('cart');
+                    }
+                    carts.push(c);
+                });
+                saveToLocalStorage();
+                addLog('update', '備份', `匯入 JSON 備份（合併新增，共 ${validCarts.length} 台）`);
+                alert(`已合併新增 ${validCarts.length} 台急救車。`);
+            }
+
+            activeTab = 'cart:0';
+            currentCartIndex = 0;
+            render();
+        } catch (err) {
+            console.error(err);
+            alert('匯入失敗：' + err.message);
+        }
+    };
+    reader.readAsText(file, 'utf-8');
+}
+
+/* ============================================================
+   匯出每月 15 日清單（不含區域與距截止日，窄邊界）
+   ============================================================ */
+function exportMonth15ToWord() {
+    const options = generateMonth15Options(12);
+    let selectedOpt = options.find(o => formatYMD(o) === selectedMonth15) || options[0];
+    const targetDate = formatYMD(selectedOpt);
+    let rows = collectItemsWithin90Days(targetDate);
+    if (month15OnlyUnder30) {
+        rows = rows.filter(r => {
+            if (r.outOfStock) return true;
+            return r.days < 30;
+        });
+    }
+    const grouped = groupMonth15RowsByCart(rows, month15SortBy);
+
+    const total = rows.length;
+    const oosCount = rows.filter(r => r.outOfStock).length;
+    const dangerCount = rows.filter(r => !r.outOfStock && r.days < 30).length;
+    const warningCount = rows.filter(r => !r.outOfStock && r.days >= 30 && r.days < 90).length;
+
+    const docStyles = `
+        <style>
+            @page { size: A4 portrait; margin: 0.8cm 0.8cm 0.8cm 0.8cm; }
+            body { font-family: "Times New Roman", "Microsoft JhengHei", "PMingLiU", serif; font-size: 11pt; }
+            h1 { font-size: 16pt; color: #4a2d80; text-align: center; font-weight: bold; margin: 0 0 4px 0; }
+            h2 { font-size: 12pt; color: #333; text-align: center; margin: 0 0 12px 0; font-weight: normal; }
+            .summary { background: #f5f0ff; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; border: 1px solid #c9b8e8; }
+            .summary span { margin-right: 16px; font-weight: bold; font-size: 10pt; }
+            .location-title { background: #f0e8ff; padding: 6px 10px; margin-top: 12px; font-size: 12pt; font-weight: bold; color: #4a2d80; border-left: 4px solid #6b4fa8; border: 1px solid #c9b8e8; }
+            .location-count { font-size: 10pt; color: #6b4fa8; margin-left: 8px; font-weight: normal; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+            th { background: #ede4ff; border: 1px solid #888; padding: 4px 5px; font-size: 9.5pt; text-align: left; font-weight: bold; }
+            td { border: 1px solid #888; padding: 4px 5px; font-size: 9.5pt; vertical-align: top; }
+            .danger { background: #ffe1e1; color: #a00; font-weight: bold; }
+            .warning { background: #fff8d6; color: #8a6d00; font-weight: bold; }
+            .oos { background: #ffcccc; color: #a00; font-weight: bold; }
+            .note { font-size: 9pt; color: #333; margin-top: 14px; text-align: center; }
+        </style>
+    `;
+
+    let bodyHtml = `<h1>📅 每月 15 日即將過期物品清單</h1>`;
+    bodyHtml += `<h2>截止日期：${formatMonth15Label(selectedOpt)}（顯示距離截止日 90 天內）${month15OnlyUnder30 ? '，只顯示 <30 天' : ''}${month15SortBy === 'name' ? '，按物品名稱排序' : ''}</h2>`;
+    bodyHtml += `<div class="summary">
+                    <span style="color:#a00;">🔴 缺貨：${oosCount} 項</span>
+                    <span style="color:#a00;">🔴 &lt;30 天：${dangerCount} 項</span>
+                    <span style="color:#8a6d00;">🟡 30–89 天：${warningCount} 項</span>
+                    <span style="color:#1e4a5f;">📦 總計：${total} 項</span>
+                 </div>`;
+
+    if (total === 0) {
+        bodyHtml += `<p style="text-align:center; color:#8aa9bb; padding:20px;">🎉 截至此截止日前 90 天內，沒有即將過期或缺貨的物品</p>`;
+    } else {
+        grouped.forEach(group => {
+            bodyHtml += `<div class="location-title">🚑 ${escapeHtml(group.name)}<span class="location-count">（${group.items.length} 項）</span></div>`;
+            bodyHtml += `<table><thead><tr>
+                            <th style="width:40%">物品名稱</th>
+                            <th style="width:10%">數量</th>
+                            <th style="width:18%">有效日期</th>
+                            <th style="width:20%">備註</th>
+                            <th style="width:12%">狀態</th>
+                         </tr></thead><tbody>`;
+            group.items.forEach(r => {
+                let cls, statusText;
+                if (r.outOfStock) {
+                    cls = 'oos'; statusText = '缺貨';
+                } else if (r.days < 0) {
+                    cls = 'danger'; statusText = `已過期 ${Math.abs(r.days)} 天`;
+                } else if (r.days < 30) {
+                    cls = 'danger'; statusText = `${r.days} 天`;
+                } else if (r.days < 90) {
+                    cls = 'warning'; statusText = `${r.days} 天`;
+                } else {
+                    cls = ''; statusText = `${r.days} 天`;
+                }
+                bodyHtml += `<tr class="${cls}">
+                                <td>${escapeHtml(r.itemName)}</td>
+                                <td style="text-align:center;">${r.quantity}</td>
+                                <td>${r.expiry}</td>
+                                <td>${escapeHtml(r.note || '')}</td>
+                                <td>${statusText}</td>
+                             </tr>`;
+            });
+            bodyHtml += `</tbody></table>`;
+        });
+    }
+
+    bodyHtml += `<div class="note">匯出日期：${new Date().toLocaleDateString('zh-TW')}</div>`;
+
+    const fullHtml = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+              xmlns:w="urn:schemas-microsoft-com:office:word" 
+              xmlns="http://www.w3.org/TR/REC-html40">
+        <head><meta charset="utf-8"><title>每月15日即將過期物品清單</title>${docStyles}</head>
+        <body>${bodyHtml}</body></html>
+    `;
+
+    const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
+    const filename = `每月15日即將過期物品清單_${formatMonth15Label(selectedOpt).replace(/\//g,'-')}${month15OnlyUnder30 ? '_30天內' : ''}${month15SortBy === 'name' ? '_按名稱' : ''}_${new Date().toISOString().slice(0,10)}.doc`;
+    safeSaveAs(blob, filename);
+    addLog('update', '每月15日清單', `匯出每月 15 日即將過期物品清單（${formatMonth15Label(selectedOpt)}）`);
+}
+
+/* ============================================================
+   管理功能事件
+   ============================================================ */
+function initAdminListeners() {
+    const container = document.getElementById('pageContainer');
+
+    const exportAllJsonBtn = document.getElementById('exportAllJsonBtn');
+    if (exportAllJsonBtn) {
+        exportAllJsonBtn.addEventListener('click', () => {
+            if (!confirm(`確定要匯出全部資料備份嗎？\n共 ${carts.length} 台急救車。`)) return;
+            exportAllToJson();
+        });
+    }
+
+    const importJsonBtn = document.getElementById('importJsonBtn');
+    if (importJsonBtn) {
+        importJsonBtn.addEventListener('click', () => {
+            document.getElementById('importJsonInput').click();
+        });
+    }
+
+    const batchDeleteAll = document.getElementById('batchDeleteAll');
+    if (batchDeleteAll) {
+        batchDeleteAll.addEventListener('change', () => {
+            container.querySelectorAll('.batch-delete-cart').forEach(cb => {
+                cb.checked = batchDeleteAll.checked;
+            });
+        });
+    }
+    const batchDateAll = document.getElementById('batchDateAll');
+    if (batchDateAll) {
+        batchDateAll.addEventListener('change', () => {
+            container.querySelectorAll('.batch-date-cart').forEach(cb => {
+                cb.checked = batchDateAll.checked;
+            });
+        });
+    }
+    const batchAddBtn = document.getElementById('batchAddBtn');
+    if (batchAddBtn) {
+        batchAddBtn.addEventListener('click', () => {
+            const count = parseInt(document.getElementById('batchAddCount').value, 10);
+            const prefix = document.getElementById('batchAddPrefix').value.trim() || '急救車';
+            if (isNaN(count) || count < 1) { alert('請輸入有效的數量（至少 1）'); return; }
+            if (count > 50) { alert('一次最多新增 50 台'); return; }
+            const startIndex = carts.length + 1;
+            const createdNames = [];
+            for (let i = 0; i < count; i++) {
+                const name = `${prefix}-${String(startIndex + i).padStart(2, '0')}`;
+                carts.push(createFullCart(name));
+                createdNames.push(name);
+            }
+            saveToLocalStorage();
+            addLog('create', '管理功能', `批量新增 ${count} 台急救車：${createdNames.join('、')}`);
+            alert(`已新增 ${count} 台急救車`);
+            render();
+        });
+    }
+    const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+    if (batchDeleteBtn) {
+        batchDeleteBtn.addEventListener('click', () => {
+            const checked = Array.from(container.querySelectorAll('.batch-delete-cart:checked'))
+                .map(cb => cb.value);
+            if (checked.length === 0) { alert('請先勾選要刪除的急救車'); return; }
+            const names = checked.map(id => {
+                const c = carts.find(x => x.id === id);
+                return c ? c.name : id;
+            });
+            if (!confirm(`確定刪除以下 ${checked.length} 台急救車嗎？\n${names.join('、')}`)) return;
+            carts = carts.filter(c => !checked.includes(c.id));
+            saveToLocalStorage();
+            addLog('delete', '管理功能', `批量刪除 ${checked.length} 台急救車：${names.join('、')}`);
+            alert(`已刪除 ${checked.length} 台急救車`);
+            if (carts.length === 0) activeTab = 'overview';
+            else if (activeTab.startsWith('cart:')) {
+                currentCartIndex = Math.min(currentCartIndex, carts.length - 1);
+            }
+            render();
+        });
+    }
+    const batchDateBtn = document.getElementById('batchDateBtn');
+    if (batchDateBtn) {
+        batchDateBtn.addEventListener('click', () => {
+            const itemName = document.getElementById('batchItemSelect').value;
+            const newDate = document.getElementById('batchNewDate').value;
+            const checked = Array.from(container.querySelectorAll('.batch-date-cart:checked'))
+                .map(cb => cb.value);
+            if (!itemName) { alert('請選擇物品'); return; }
+            if (!newDate) { alert('請輸入新有效日期'); return; }
+            if (checked.length === 0) { alert('請勾選要套用的急救車'); return; }
+            let updatedCount = 0;
+            const updatedCarts = [];
+            checked.forEach(cartId => {
+                const cart = carts.find(c => c.id === cartId);
+                if (!cart) return;
+                let changed = false;
+                Object.keys(cart.items).forEach(k => {
+                    (cart.items[k] || []).forEach(it => {
+                        if (it.name === itemName) {
+                            it.expiry = newDate;
+                            it.outOfStock = false;
+                            updatedCount++;
+                            changed = true;
+                        }
+                    });
+                });
+                if (changed) updatedCarts.push(cart.name);
+            });
+            saveToLocalStorage();
+            addLog('update', '管理功能',
+                `批量修改物品「${itemName}」有效日期為 ${newDate}，套用於 ${updatedCarts.length} 台急救車（共 ${updatedCount} 筆）`);
+            alert(`已更新 ${updatedCount} 筆物品日期，套用於 ${updatedCarts.length} 台急救車`);
+            render();
+        });
+    }
+    const addFullAccessBtn = document.getElementById('addFullAccessBtn');
+    if (addFullAccessBtn && isSuperAdmin(currentUser)) {
+        addFullAccessBtn.addEventListener('click', () => {
+            const input = document.getElementById('addFullAccessInput');
+            const val = input.value.trim();
+            if (!/^0\d{6}$/.test(val)) { alert('請輸入正確格式的工號（以 0 開頭的 7 位數字）'); return; }
+            if (fullAccessUsers.includes(val)) { alert('該工號已在完全存取用戶清單中'); return; }
+            fullAccessUsers.push(val);
+            saveFullAccessUsers(fullAccessUsers);
+            addLog('update', '管理功能', `新增完全存取用戶：${val}`);
+            alert(`已新增完全存取用戶：${val}`);
+            render();
+        });
+    }
+    container.querySelectorAll('.remove-full-access').forEach(btn => {
+        if (!isSuperAdmin(currentUser)) return;
+        btn.addEventListener('click', () => {
+            const user = btn.getAttribute('data-user');
+            if (user === SUPER_ADMIN) { alert('無法移除超級管理員'); return; }
+            if (!confirm(`確定移除完全存取用戶 ${user} 嗎？`)) return;
+            fullAccessUsers = fullAccessUsers.filter(u => u !== user);
+            saveFullAccessUsers(fullAccessUsers);
+            addLog('update', '管理功能', `移除完全存取用戶：${user}`);
+            alert(`已移除完全存取用戶：${user}`);
+            render();
+        });
+    });
+}
+
+/* ============================================================
+   日期輸入處理
+   ============================================================ */
+function getSegEls(cartId, section, itemId) {
+    const yEl = document.querySelector(`input[data-cart-id="${cartId}"][data-section="${section}"][data-item-id="${itemId}"][data-field="dateYear"]`);
+    const mEl = document.querySelector(`input[data-cart-id="${cartId}"][data-section="${section}"][data-item-id="${itemId}"][data-field="dateMonth"]`);
+    const dEl = document.querySelector(`input[data-cart-id="${cartId}"][data-section="${section}"][data-item-id="${itemId}"][data-field="dateDay"]`);
+    return { yEl, mEl, dEl };
+}
+
+function getSegValues(cartId, section, itemId) {
+    const { yEl, mEl, dEl } = getSegEls(cartId, section, itemId);
+    return {
+        y: yEl ? yEl.value.trim() : '',
+        m: mEl ? mEl.value.trim() : '',
+        d: dEl ? dEl.value.trim() : ''
+    };
+}
+
+function commitDateSeg(cartId, section, itemId, autoFillDay) {
+    const item = findItem(cartId, section, itemId);
+    if (!item) return null;
+    const cart = carts.find(c => c.id === cartId);
+    const { yEl, mEl, dEl } = getSegEls(cartId, section, itemId);
+    let vals = getSegValues(cartId, section, itemId);
+    let y = vals.y, m = vals.m, d = vals.d;
+
+    if (/^\d{2}$/.test(y)) {
+        y = '20' + y;
+        if (yEl) yEl.value = y;
+    }
+    const yNum = parseInt(y, 10);
+    const mNum = parseInt(m, 10);
+    let dNum = parseInt(d, 10);
+
+    if (!y || isNaN(yNum)) {
+        item.expiry = '';
+        saveToLocalStorage();
+        updateRowDisplay(cartId, section, itemId);
+        return { y: '', m: '', d: '' };
+    }
+
+    if (!m || isNaN(mNum)) {
+        if (item.expiry !== '') {
+            item.expiry = '';
+            saveToLocalStorage();
+            updateRowDisplay(cartId, section, itemId);
+        }
+        return null;
+    }
+
+    if (mNum < 1) mNum = 1;
+    if (mNum > 12) mNum = 12;
+    const lastDay = getLastDayOfMonth(yNum, mNum);
+
+    if (!d || isNaN(dNum)) {
+        if (autoFillDay) {
+            dNum = lastDay;
+            d = String(dNum);
+            if (dEl) dEl.value = d;
+        } else {
+            return null;
+        }
+    }
+
+    if (dNum < 1) dNum = 1;
+    if (dNum > lastDay) {
+        dNum = lastDay;
+        d = String(dNum);
+        if (dEl) dEl.value = d;
+    }
+
+    const finalY = y;
+    const finalM = String(mNum);
+    const finalD = String(dNum);
+
+    const newExpiry = formatDateStr(finalY, finalM, finalD);
+    const oldExpiry = item.expiry;
+
+    if (oldExpiry !== newExpiry) {
+        item.expiry = newExpiry;
+        saveToLocalStorage();
+        addLog('update', cart ? cart.name : '',
+            `有效日期「${item.name}」：${oldExpiry || '(空)'} → ${newExpiry}`);
+        if (mEl && mEl.value !== finalM) mEl.value = finalM;
+    }
+
+    updateRowDisplay(cartId, section, itemId);
+    return { y: finalY, m: finalM, d: finalD };
+}
+
+function focusNextDateYear(cartId, section, itemId) {
+    const container = document.getElementById('pageContainer');
+    const allYears = Array.from(container.querySelectorAll('.date-seg.year:not([disabled])'));
+    const currentYear = document.querySelector(`input[data-cart-id="${cartId}"][data-section="${section}"][data-item-id="${itemId}"][data-field="dateYear"]`);
+    if (!currentYear) return;
+    const idx = allYears.indexOf(currentYear);
+    if (idx >= 0 && idx < allYears.length - 1) {
+        const next = allYears[idx + 1];
+        next.focus();
+    } else {
+        currentYear.blur();
+    }
+}
+
+/* ============================================================
+   事件處理
+   ============================================================ */
+function initGlobalListeners() {
+    const container = document.getElementById('pageContainer');
+
+    container.addEventListener('focusin', e => {
+        const t = e.target;
+        if (t.matches('.date-seg') || t.matches('.qty-input') || t.matches('.number-input')) {
+            setTimeout(() => {
+                if (typeof t.select === 'function') t.select();
+            }, 0);
+        }
+    });
+
+    container.addEventListener('input', e => {
+        const t = e.target;
+
+        if (t.matches('.date-seg')) {
+            const { cartId, section, itemId, field } = t.dataset;
+            let v = t.value.replace(/[^\d]/g, '');
+            if (field === 'dateYear') v = v.slice(0, 4);
+            else v = v.slice(0, 2);
+            if (t.value !== v) t.value = v;
+
+            if (field === 'dateYear') {
+                if (v.length === 2) {
+                    const full = '20' + v;
+                    t.value = full;
+                    commitDateSeg(cartId, section, itemId, false);
+                    const { mEl } = getSegEls(cartId, section, itemId);
+                    if (mEl) {
+                        mEl.focus();
+                        setTimeout(() => { if (typeof mEl.select === 'function') mEl.select(); }, 0);
+                    }
+                    return;
+                }
+                if (v.length === 4) {
+                    commitDateSeg(cartId, section, itemId, false);
+                    const { mEl } = getSegEls(cartId, section, itemId);
+                    if (mEl) {
+                        mEl.focus();
+                        setTimeout(() => { if (typeof mEl.select === 'function') mEl.select(); }, 0);
+                    }
+                    return;
+                }
+                commitDateSeg(cartId, section, itemId, false);
+                return;
+            }
+
+            if (field === 'dateMonth') {
+                if (v.length === 0) {
+                    commitDateSeg(cartId, section, itemId, false);
+                    return;
+                }
+                const first = v[0];
+                const mNum = parseInt(v, 10);
+
+                if (first === '0' || first === '1') {
+                    if (v.length === 2 && !isNaN(mNum) && mNum >= 1 && mNum <= 12) {
+                        commitDateSeg(cartId, section, itemId, false);
+                        const { dEl } = getSegEls(cartId, section, itemId);
+                        if (dEl) {
+                            dEl.focus();
+                            setTimeout(() => { if (typeof dEl.select === 'function') dEl.select(); }, 0);
+                        }
+                        return;
+                    }
+                    commitDateSeg(cartId, section, itemId, false);
+                    return;
+                }
+
+                if (v.length === 1 && first >= '2' && first <= '9') {
+                    t.value = '0' + v;
+                    commitDateSeg(cartId, section, itemId, false);
+                    const { dEl } = getSegEls(cartId, section, itemId);
+                    if (dEl) {
+                        dEl.focus();
+                        setTimeout(() => { if (typeof dEl.select === 'function') dEl.select(); }, 0);
+                    }
+                    return;
+                }
+
+                if (v.length === 2 && !isNaN(mNum) && mNum >= 1 && mNum <= 12) {
+                    commitDateSeg(cartId, section, itemId, false);
+                    const { dEl } = getSegEls(cartId, section, itemId);
+                    if (dEl) {
+                        dEl.focus();
+                        setTimeout(() => { if (typeof dEl.select === 'function') dEl.select(); }, 0);
+                    }
+                    return;
+                }
+
+                commitDateSeg(cartId, section, itemId, false);
+                return;
+            }
+
+            if (field === 'dateDay') {
+                commitDateSeg(cartId, section, itemId, false);
+                return;
+            }
+
+            return;
+        }
+
+        if (!t.matches('.item-name-input, .qty-input, .number-input, .cart-name, .section-title-input, .note-input, .lock-no-input')) return;
+        handleFieldChange(t);
+    });
+
+    container.addEventListener('focusout', e => {
+        const t = e.target;
+        if (!t.matches('.date-seg')) return;
+        const { cartId, section, itemId } = t.dataset;
+        const vals = getSegValues(cartId, section, itemId);
+        if (vals.y && vals.m && !vals.d) {
+            if (/^\d{2}$/.test(vals.y)) {
+                const { yEl } = getSegEls(cartId, section, itemId);
+                if (yEl) yEl.value = '20' + vals.y;
+            }
+            commitDateSeg(cartId, section, itemId, true);
+        } else {
+            commitDateSeg(cartId, section, itemId, true);
+        }
+    }, true);
+
+    container.addEventListener('change', e => {
+        const t = e.target;
+        if (t.matches('.oos-checkbox')) {
+            const { cartId, section, itemId } = t.dataset;
+            const item = findItem(cartId, section, itemId);
+            if (!item) return;
+            const cart = carts.find(c => c.id === cartId);
+            const oldVal = item.outOfStock;
+            item.outOfStock = t.checked;
+            saveToLocalStorage();
+            if (oldVal !== item.outOfStock) {
+                addLog('update', cart ? cart.name : '',
+                    `物品「${item.name}」缺貨狀態：${oldVal ? '是' : '否'} → ${item.outOfStock ? '是' : '否'}`);
+            }
+            render();
+            return;
+        }
+    });
+
+    container.addEventListener('keydown', e => {
+        const t = e.target;
+        if (t.matches('.date-seg')) {
+            const { cartId, section, itemId, field } = t.dataset;
+
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (field === 'dateYear') {
+                    const { mEl } = getSegEls(cartId, section, itemId);
+                    if (mEl) { mEl.focus(); setTimeout(() => { if (typeof mEl.select === 'function') mEl.select(); }, 0); }
+                } else if (field === 'dateMonth') {
+                    const { dEl } = getSegEls(cartId, section, itemId);
+                    if (dEl) { dEl.focus(); setTimeout(() => { if (typeof dEl.select === 'function') dEl.select(); }, 0); }
+                }
+                return;
+            }
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (field === 'dateDay') {
+                    const { mEl } = getSegEls(cartId, section, itemId);
+                    if (mEl) { mEl.focus(); setTimeout(() => { if (typeof mEl.select === 'function') mEl.select(); }, 0); }
+                } else if (field === 'dateMonth') {
+                    const { yEl } = getSegEls(cartId, section, itemId);
+                    if (yEl) { yEl.focus(); setTimeout(() => { if (typeof yEl.select === 'function') yEl.select(); }, 0); }
+                }
+                return;
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const vals = getSegValues(cartId, section, itemId);
+                if (vals.y && vals.m && !vals.d) {
+                    commitDateSeg(cartId, section, itemId, true);
+                    focusNextDateYear(cartId, section, itemId);
+                    return;
+                }
+                commitDateSeg(cartId, section, itemId, true);
+                focusNextDateYear(cartId, section, itemId);
+                return;
+            }
+            if (e.key === 'Backspace' && t.value === '') {
+                if (field === 'dateMonth') {
+                    e.preventDefault();
+                    const { yEl } = getSegEls(cartId, section, itemId);
+                    if (yEl) { yEl.focus(); setTimeout(() => { if (typeof yEl.select === 'function') yEl.select(); }, 0); }
+                } else if (field === 'dateDay') {
+                    e.preventDefault();
+                    const { mEl } = getSegEls(cartId, section, itemId);
+                    if (mEl) { mEl.focus(); setTimeout(() => { if (typeof mEl.select === 'function') mEl.select(); }, 0); }
+                }
+                return;
+            }
+            return;
+        }
+    });
+
+    container.addEventListener('click', e => {
+        const btn = e.target.closest('button');
+        if (!btn || btn.disabled) return;
+
+        if (btn.classList.contains('date-seg-clear')) {
+            const { cartId, section, itemId } = btn.dataset;
+            const item = findItem(cartId, section, itemId);
+            const cart = carts.find(c => c.id === cartId);
+            if (!item) return;
+            item.expiry = '';
+            saveToLocalStorage();
+            addLog('update', cart ? cart.name : '', `清空物品「${item.name}」的有效日期`);
+            render();
+            return;
+        }
+        if (btn.classList.contains('delete-item')) {
+            const { cartId, section, itemId } = btn.dataset;
+            const cart = carts.find(c => c.id === cartId);
+            if (!cart) return;
+            const item = (cart.items[section] || []).find(i => i.id === itemId);
+            if (!item) return;
+            if (!confirm(`確定刪除物品「${item.name}」嗎？`)) return;
+            cart.items[section] = (cart.items[section] || []).filter(i => i.id !== itemId);
+            saveToLocalStorage();
+            addLog('delete', cart.name, `刪除物品「${item.name}」`);
+            render();
+            return;
+        }
+        if (btn.classList.contains('add-item-to-section')) {
+            const { cartId, section } = btn.dataset;
+            const cart = carts.find(c => c.id === cartId);
+            if (!cart) return;
+            if (!cart.items[section]) cart.items[section] = [];
+            const newItem = { id: genId('item'), name: '新物品', quantity: 1, expiry: '', outOfStock: false, note: '', lockNo: '' };
+            cart.items[section].push(newItem);
+            saveToLocalStorage();
+            addLog('create', cart.name, `在區域「${(cart.sectionNames && cart.sectionNames[section]) || section}」新增物品「新物品」`);
+            render();
+            return;
+        }
+        if (btn.classList.contains('delete-section')) {
+            const { cartId, section } = btn.dataset;
+            const cart = carts.find(c => c.id === cartId);
+            if (!cart) return;
+            const secName = (cart.sectionNames && cart.sectionNames[section]) || section;
+            const itemCount = (cart.items[section] || []).length;
+            if (!confirm(`確定刪除區域「${secName}」嗎？此區域內有 ${itemCount} 項物品，將一併刪除。`)) return;
+            delete cart.items[section];
+            if (cart.sectionNames) delete cart.sectionNames[section];
+            if (cart.sectionOrder) {
+                cart.sectionOrder = cart.sectionOrder.filter(k => k !== section);
+            }
+            saveToLocalStorage();
+            addLog('delete', cart.name, `刪除區域「${secName}」（含 ${itemCount} 項物品）`);
+            render();
+            return;
+        }
+        if (btn.classList.contains('add-section-btn')) {
+            const cartId = btn.dataset.cartId;
+            const cart = carts.find(c => c.id === cartId);
+            if (!cart) return;
+            const name = prompt('請輸入新區域名稱：');
+            if (name === null) return;
+            const trimmed = name.trim();
+            if (!trimmed) { alert('區域名稱不能為空'); return; }
+            const key = 'custom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+            cart.items[key] = [];
+            if (!cart.sectionNames) cart.sectionNames = {};
+            cart.sectionNames[key] = trimmed;
+            if (!cart.sectionOrder) cart.sectionOrder = Object.keys(cart.items);
+            if (!cart.sectionOrder.includes(key)) cart.sectionOrder.push(key);
+            saveToLocalStorage();
+            addLog('create', cart.name, `新增區域「${trimmed}」`);
+            render();
+            return;
+        }
+        if (btn.classList.contains('move-section-up')) {
+            const { cartId, section } = btn.dataset;
+            const cart = carts.find(c => c.id === cartId);
+            if (!cart || !cart.sectionOrder) return;
+            const idx = cart.sectionOrder.indexOf(section);
+            if (idx <= 0) return;
+            [cart.sectionOrder[idx - 1], cart.sectionOrder[idx]] = [cart.sectionOrder[idx], cart.sectionOrder[idx - 1]];
+            saveToLocalStorage();
+            render();
+            return;
+        }
+        if (btn.classList.contains('move-section-down')) {
+            const { cartId, section } = btn.dataset;
+            const cart = carts.find(c => c.id === cartId);
+            if (!cart || !cart.sectionOrder) return;
+            const idx = cart.sectionOrder.indexOf(section);
+            if (idx < 0 || idx >= cart.sectionOrder.length - 1) return;
+            [cart.sectionOrder[idx + 1], cart.sectionOrder[idx]] = [cart.sectionOrder[idx], cart.sectionOrder[idx + 1]];
+            saveToLocalStorage();
+            render();
+            return;
+        }
+        if (btn.classList.contains('delete-cart')) {
+            const cartId = btn.dataset.cartId;
+            const cart = carts.find(c => c.id === cartId);
+            if (!cart) return;
+            if (!requestDeletePassword()) return;
+            addLog('delete', cart.name, `刪除整台急救車「${cart.name}」`);
+            carts = carts.filter(c => c.id !== cartId);
+            if (carts.length === 0) activeTab = 'overview';
+            else { activeTab = 'cart:0'; currentCartIndex = 0; }
+            saveToLocalStorage();
+            render();
+            return;
+        }
+    });
+
+    document.getElementById('addCartBtn').addEventListener('click', () => {
+        const newCart = createFullCart(`急救車 - ${String(carts.length + 1).padStart(2,'0')}`);
+        carts.push(newCart);
+        activeTab = 'cart:' + (carts.length - 1);
+        currentCartIndex = carts.length - 1;
+        saveToLocalStorage();
+        addLog('create', newCart.name, `新增急救車「${newCart.name}」`);
+        render();
+    });
+
+    document.getElementById('adminBtn').addEventListener('click', () => {
+        if (!requestAdminPassword()) return;
+        activeTab = 'admin';
+        render();
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+
+    document.getElementById('exportWordBtn').addEventListener('click', () => {
+        if (activeTab === 'overview') {
+            exportMonth15ToWord();
+        } else if (activeTab === 'admin') {
+            alert('管理功能頁面無法匯出 Word。');
+        } else {
+            if (!templateArrayBuffer) {
+                document.getElementById('templateFileInput').click();
+            } else {
+                exportCartToDocx();
+            }
+        }
+    });
+
+    document.getElementById('templateFileInput').addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            templateArrayBuffer = ev.target.result;
+            templateFileName = file.name;
+            updateTemplateHint();
+            exportCartToDocx();
+        };
+        reader.readAsArrayBuffer(file);
+        e.target.value = '';
+    });
+
+    document.getElementById('importJsonInput').addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        importFromJson(file);
+        e.target.value = '';
+    });
+
+    document.getElementById('fontSizeDown').addEventListener('click', () => {
+        changeFontSize(-1);
+    });
+    document.getElementById('fontSizeUp').addEventListener('click', () => {
+        changeFontSize(1);
+    });
+}
+
+function updateTemplateHint() {
+    const hint = document.getElementById('templateHint');
+    if (templateArrayBuffer) {
+        hint.textContent = `模板：${templateFileName} ✅`;
+        hint.classList.add('ok');
+    } else {
+        hint.textContent = '模板：未選擇';
+        hint.classList.remove('ok');
+    }
+}
+
+async function autoLoadTemplate() {
+    try {
+        const res = await fetch('./template.docx');
+        if (!res.ok) throw new Error('找不到 template.docx');
+        templateArrayBuffer = await res.arrayBuffer();
+        templateFileName = 'template.docx';
+        updateTemplateHint();
+        console.log("✅ 模板自動載入成功");
+    } catch (e) {
+        console.warn("⚠️ 自動載入模板失敗，需手動選擇:", e);
+    }
+}
+
+function handleFieldChange(target) {
+    const { cartId, section, itemId, field, sectionKey } = target.dataset;
+
+    if (field === 'name' && !section) {
+        const cart = carts.find(c => c.id === cartId);
+        if (cart) {
+            const oldName = cart.name;
+            cart.name = target.value;
+            saveToLocalStorage();
+            if (oldName !== cart.name) {
+                addLog('update', cart.name, `修改車名：「${oldName}」→「${cart.name}」`);
+            }
+            renderTabs();
+        }
+        return;
+    }
+    if (field === 'sectionName' && sectionKey) {
+        const cart = carts.find(c => c.id === cartId);
+        if (!cart) return;
+        if (!cart.sectionNames) cart.sectionNames = {};
+        const oldName = cart.sectionNames[sectionKey] || sectionKey;
+        cart.sectionNames[sectionKey] = target.value;
+        saveToLocalStorage();
+        if (oldName !== target.value) {
+            addLog('update', cart.name, `修改區域名稱：「${oldName}」→「${target.value}」`);
+        }
+        return;
+    }
+    if (!itemId) return;
+    const item = findItem(cartId, section, itemId);
+    if (!item) return;
+    const cart = carts.find(c => c.id === cartId);
+
+    let value = target.value;
+    if (field === 'quantity') {
+        value = parseInt(value, 10);
+        if (isNaN(value) || value < 0) value = 0;
+    }
+
+    const oldValue = item[field];
+    if (oldValue === value) return;
+
+    item[field] = value;
+    saveToLocalStorage();
+
+    const fieldName = {
+        name: '物品名稱',
+        quantity: '數量',
+        note: '備註',
+        lockNo: '鎖匙編號'
+    }[field] || field;
+
+    addLog('update', cart ? cart.name : '',
+        `${fieldName}「${field === 'name' ? oldValue : item.name}」：${oldValue || '(空)'} → ${value || '(空)'}`);
+}
+
+function findItem(cartId, section, itemId) {
+    const cart = carts.find(c => c.id === cartId);
+    if (!cart) return null;
+    return (cart.items[section] || []).find(i => i.id === itemId);
+}
+
+function updateRowDisplay(cartId, section, itemId) {
+    const item = findItem(cartId, section, itemId);
+    if (!item) return;
+    const row = document.querySelector(`tr[data-cart-id="${cartId}"][data-section="${section}"][data-item-id="${itemId}"]`);
+    if (!row) return;
+
+    const rowClass = getRowHighlightClass(item);
+    row.classList.remove('row-warning', 'row-danger', 'row-outofstock');
+    if (rowClass) row.classList.add(rowClass);
+
+    const tds = row.querySelectorAll('td');
+    if (tds.length >= 6) {
+        const statusTd = tds[5];
+        if (item.outOfStock) {
+            statusTd.innerText = '缺貨';
+            statusTd.style.color = '#b33a3a';
+        } else if (isNonExpiring(item.expiry)) {
+            statusTd.innerHTML = '<span class="no-expiry-badge">不會過期</span>';
+            statusTd.style.color = '';
+        } else {
+            const d = daysUntil(item.expiry);
+            let txt = d < 0 ? `已過期 ${Math.abs(d)} 天` : `${d} 天`;
+            statusTd.innerText = txt;
+            statusTd.style.color = d < 30 ? '#b33a3a' : (d < 90 ? '#b68b00' : '#2a4d62');
+        }
+    }
+
+    const segGroup = row.querySelector('.date-seg-group');
+    if (segGroup) {
+        segGroup.classList.remove('warning', 'danger');
+        const sc = getDateSegHighlight(item.expiry);
+        if (sc) segGroup.classList.add(sc);
+    }
+}
+
+function findItemExpiry(cart, sectionKey, matchText) {
+    const items = cart.items[sectionKey] || [];
+    const found = items.find(it => it.name.includes(matchText));
+    return found ? found : null;
+}
+
+/* ============================================================
+   Word 匯出（單台車） - 已依需求調整
+   ============================================================ */
+function exportCartToDocx() {
+    const cart = carts[currentCartIndex];
+    if (!cart) { alert('找不到急救車資料'); return; }
+    if (!templateArrayBuffer) { alert('請先選擇模板檔案 急救車_template.docx'); return; }
+
+    const data = {};
+    data.location = cart.name;
+
+    /* 日期改成每月 15 號（本月 15 號） */
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth() + 1;
+    data.today = `${y}-${String(m).padStart(2,'0')}-15`;
+
+    /* 取得急救藥物盒鎖匙物品 */
+    function getLockItem(cart) {
+        const items = cart.items.level1 || [];
+        return items.find(it =>
+            it.name.includes('急救藥物盒鎖匙') || it.name.includes('Lock No')
+        ) || null;
+    }
+
+    /* level1_lock_no = 備註欄的藥盒編號 */
+    function extractLockNo(cart) {
+        const lockItem = getLockItem(cart);
+        if (!lockItem) return '';
+        if (lockItem.note && lockItem.note.trim() !== '') {
+            return lockItem.note.trim();
+        }
+        return '';
+    }
+
+    /* level1_lock = 有效日期（若無效期則為 N/A） */
+    function extractLockExpiry(cart) {
+        const lockItem = getLockItem(cart);
+        if (!lockItem) return 'N/A';
+        if (lockItem.outOfStock) return '缺貨';
+        if (lockItem.expiry && lockItem.expiry.trim() !== '') {
+            return lockItem.expiry.trim();
+        }
+        return 'N/A';
+    }
+
+    data.level1_lock_no = extractLockNo(cart);
+
+    WORD_TEMPLATE.page1.concat(WORD_TEMPLATE.page2).forEach(block => {
+        block.items.forEach(row => {
+            const item = findItemExpiry(cart, row.section, row.match);
+            let value = 'N/A';
+            if (item) {
+                if (item.outOfStock) value = '缺貨';
+                else if (item.expiry && item.expiry.trim() !== '') value = item.expiry;
+                else value = 'N/A';
+            }
+
+            /* 急救藥物盒鎖匙：有效日期欄位 → level1_lock；備註欄位 → level1_lock_no */
+            if (row.placeholder === 'level1_lock') {
+                data['level1_lock'] = extractLockExpiry(cart);
+                data['level1_lock_no'] = extractLockNo(cart);
+            } else {
+                data[row.placeholder] = value;
+            }
+        });
+    });
+
+    try {
+        const zip = new PizZip(templateArrayBuffer);
+        const doc = new window.docxtemplater(zip, {
+            paragraphLoop: true,
+            linebreaks: true,
+            delimiters: { start: '{{', end: '}}' },
+            nullGetter: () => 'N/A'
+        });
+        doc.render(data);
+        const out = doc.getZip().generate({
+            type: 'blob',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        });
+        const fileName = `${cart.name}_${new Date().toISOString().slice(0,10)}.docx`;
+        safeSaveAs(out, fileName);
+        addLog('update', cart.name, `匯出 Word 檔「${fileName}」`);
+    } catch (err) {
+        console.error(err);
+        alert('匯出失敗：' + err.message);
+    }
+}
+
+/* ============================================================
+   初始化
+   ============================================================ */
+window.addEventListener('DOMContentLoaded', () => {
+    applyFontSize(loadFontSize());
+    initLogin();
+});
+
+window.render = render;
+window.carts = carts;
+</script>
+</body>
+</html>
