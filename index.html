@@ -770,11 +770,9 @@ async function initSystem() {
         await saveToLocalStorage(); // 第一次建立后，推送到云端
     }
 
-    // 3. 数据准备好后，启动系统
-    window.addEventListener('DOMContentLoaded', () => {
-        applyFontSize(loadFontSize());
-        initLogin();
-    });
+     // 3. 数据准备好后，启动系统
+    applyFontSize(loadFontSize());
+    initLogin();
 }
 
 // 执行初始化
