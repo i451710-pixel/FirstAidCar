@@ -277,7 +277,7 @@
             <span class="fontsize-label" id="fontSizeLabel">中</span>
         </div>
         <span style="flex:1; text-align:right; font-size:0.9rem; color:#476f84;">
-            ⚠️ &lt; 90天 黃色 | &lt; 30天 紅色 | 缺貨 紅色 | 留空 = 不會過期 | ⏎ Enter 跳下一項
+            ⚠️ &lt; 90天 黃色高亮 | &lt; 30天或缺貨 紅色高亮 | 留空 = 不會過期 | ⏎ Enter 跳下一項
         </span>
     </div>
 
@@ -287,13 +287,13 @@
     <div class="tabs" id="tabsContainer"></div>
 
     <div id="pageContainer"></div>
-
-    <div class="footer-note">
-        <div>📌 核查所有物品有效期，兩個月內到期物品必須提前更換</div>
-        <div>📌 專用物品需於有效期9個月前提前申請補充</div>
-    </div>
+       </div>
 </div>
 
+<div id="uidDisplay" style="position: fixed; bottom: 10px; left: 10px; font-size: 12px; color: #888; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 6px; z-index: 9999; border: 1px solid #ddd;">
+    UID: 載入中...
+</div>
+    
 <script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.7/dist/pizzip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.50.0/build/docxtemplater.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
@@ -323,7 +323,8 @@
     onAuthStateChanged(auth, (user) => {
       if (user) {
         deviceUID = user.uid;
-        alert("✅ 當前設備 UID: " + deviceUID);
+        const uidDiv = document.getElementById('uidDisplay');
+        if (uidDiv) uidDiv.textContent = '設備 UID: ' + deviceUID;
         resolve(deviceUID);
       } else {
         signInAnonymously(auth).catch((error) => {
@@ -403,26 +404,6 @@ const SECTION_DEFS = [
     { key: 'level3',    name: '第三層 呼吸及氣道用品 3rd level Airway & Breathing' },
     { key: 'level4',    name: '第四層 穿刺用品及防護裝備 4th level Invasive Materials & Protective equipments' }
 ];
-
-const FULL_ACCESS_KEY = 'firstAidFullAccessUsers_v1';
-const DEFAULT_FULL_ACCESS = ['0206179', '0204069', '0203024'];
-const SUPER_ADMIN = '0206179';
-
-function loadFullAccessUsers() {
-    try {
-        const raw = localStorage.getItem(FULL_ACCESS_KEY);
-        if (!raw) return DEFAULT_FULL_ACCESS.slice();
-        const arr = JSON.parse(raw);
-        if (!Array.isArray(arr)) return DEFAULT_FULL_ACCESS.slice();
-        return arr;
-    } catch (e) { return DEFAULT_FULL_ACCESS.slice(); }
-}
-function saveFullAccessUsers(arr) {
-    try { localStorage.setItem(FULL_ACCESS_KEY, JSON.stringify(arr)); } catch (e) {}
-}
-let fullAccessUsers = loadFullAccessUsers();
-function isFullAccessUser(user) { return fullAccessUsers.includes(user); }
-function isSuperAdmin(user) { return user === SUPER_ADMIN; }
 
 const WORD_TEMPLATE = {
     page1: [
@@ -680,8 +661,8 @@ async function loadFromLocalStorage() {
         }
     } catch (error) {
         // 👇 這裡會印出詳細的錯誤原因（請按 F12 看 Console）
-        console.error("❌ 读取 Firebase 失败，详细原因：", error); 
-        alert("读取云端数据失败！请按 F12 查看详细错误。");
+        console.error("❌ 讀取 Firebase 失敗，詳細原因：", error); 
+        alert("讀取雲端數據失敗！请按 F12 查看详细错误。");
         return null;
     }
 }
@@ -690,19 +671,19 @@ async function loadFromLocalStorage() {
 async function saveToLocalStorage() {
     try {
         if (!window.firebaseAPI) return;
-        // 👇 這裡要把 authReady 解構出來
         const { doc, setDoc, db, authReady } = window.firebaseAPI; 
         await authReady;
         const docRef = doc(db, "carts", "main");
         
         await setDoc(docRef, {
             carts: carts,
-            deviceSecret: DEVICE_SECRET
+            deviceSecret: DEVICE_SECRET,
+            login_id: currentUser // 👈 新增這行，把當前登入的工號傳給 Firebase
         });
-        console.log("✅ 资料已同步至云端");
+        console.log("✅ 資料已同步至雲端");
     } catch (error) {
-        console.error("❌ 保存到 Firebase 失败:", error);
-        alert("保存失败！可能是网络问题，或暗号与安全规则不一致。");
+        console.error("❌ 保存失敗:", error);
+        alert("保存失敗！此工號或設備未獲授權修改數據。");
     }
 }
 
@@ -753,7 +734,7 @@ async function initSystem() {
     
     if (cloudData && cloudData.length > 0) {
         carts = cloudData;
-        console.log("已从云端载入最新数据");
+        console.log("已載入最新數據");
     } else {
         // 2. 云端没数据（第一次使用），执行原本的初始化逻辑
         carts = [
@@ -785,7 +766,7 @@ async function initSystem() {
             sec.level4[2].expiry = d(15 + ci * 2);
         });
 
-        console.log("建立预设数据...");
+        console.log("建立預設數據...");
         await saveToLocalStorage(); // 第一次建立后，推送到云端
     }
 
@@ -1051,18 +1032,61 @@ function initLogin() {
     input.focus();
 }
 
-function enterApp() {
+// 檢查當前設備或工號是否有修改權限
+async function checkWritePermission() {
+    if (!window.firebaseAPI) return false;
+    const { doc, getDoc, db, authReady, getDeviceUID } = window.firebaseAPI;
+    
+    await authReady; // 確保 Firebase 已載入
+    const deviceUID = getDeviceUID();
+    
+    // 1. 檢查是否為授權工號
+    try {
+        const userDoc = await getDoc(doc(db, "authorized_users", currentUser));
+        if (userDoc.exists()) return true;
+    } catch (e) { console.warn("檢查工號失敗:", e); }
+    
+    // 2. 如果不是授權工號，檢查是否為主電腦
+    if (deviceUID) {
+        try {
+            const deviceDoc = await getDoc(doc(db, "master_devices", deviceUID));
+            if (deviceDoc.exists()) return true;
+        } catch (e) { console.warn("檢查設備失敗:", e); }
+    }
+    
+    return false;
+}
+    
+async function enterApp() {
     document.getElementById('loginOverlay').style.display = 'none';
     document.getElementById('appContainer').style.display = 'block';
     const userNameEl = document.getElementById('currentUser');
     userNameEl.textContent = `👤 ${currentUser}`;
-    if (isFullAccessUser(currentUser)) userNameEl.classList.add('full-access');
-    else userNameEl.classList.remove('full-access');
+    
     applyFontSize(loadFontSize());
     render();
     initGlobalListeners();
     updateTemplateHint();
     autoLoadTemplate();
+
+   const canWrite = await checkWritePermission();
+    if (canWrite) {
+        userNameEl.classList.add('full-access');
+    } else {
+        userNameEl.classList.remove('full-access');
+        setTimeout(() => {
+            document.querySelectorAll('input, button').forEach(el => {
+                if (!el.classList.contains('logout-btn') && 
+                    !el.closest('.fontsize-group') && 
+                    !el.classList.contains('tab-btn') &&
+                    el.id !== 'exportWordBtn') {
+                    el.disabled = true;
+                    el.style.opacity = '0.6';
+                }
+            });
+            alert("⚠️ 您目前的工號與設備只有查看權限，無法修改資料。");
+        }, 500);
+    }
 }
 
 function logout() {
@@ -1076,19 +1100,9 @@ function logout() {
    密碼驗證
    ============================================================ */
 function requestAdminPassword() {
-    if (isFullAccessUser(currentUser)) return true;
-    if (adminUnlocked) return true;
-    const pwd = prompt('請輸入密碼以進入管理功能：');
-    if (pwd === null) return false;
-    if (pwd !== 'admin') { alert('密碼錯誤，無法進入管理功能。'); return false; }
-    adminUnlocked = true;
-    return true;
+    return true; 
 }
 function requestDeletePassword() {
-    if (isFullAccessUser(currentUser)) return true;
-    const pwd = prompt('請輸入密碼以刪除這台急救車：');
-    if (pwd === null) return false;
-    if (pwd !== 'admin') { alert('密碼錯誤，無法刪除。'); return false; }
     return true;
 }
 
@@ -1642,48 +1656,6 @@ function renderAdminPage() {
             </div>
     `;
 
-    if (isSuperAdmin(currentUser)) {
-        html += `
-            <div class="admin-section">
-                <div class="admin-section-title">👥 完全存取用戶管理</div>
-                <div class="admin-hint">完全存取用戶進入管理功能與刪除車時不需輸入密碼。可新增或移除。</div>
-                <div class="admin-form">
-                    <label>工號：</label>
-                    <input type="text" id="addFullAccessInput" placeholder="請輸入 7 位工號" maxlength="7" style="width:200px;">
-                    <button class="btn btn-primary" id="addFullAccessBtn">新增</button>
-                </div>
-                <div class="table-wrapper" style="padding:0;">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>工號</th>
-                                <th style="width:120px;">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-        `;
-        if (fullAccessUsers.length === 0) {
-            html += `<tr><td colspan="2" style="text-align:center; color:#8aa9bb; padding:20px;">目前沒有完全存取用戶</td></tr>`;
-        } else {
-            fullAccessUsers.forEach(u => {
-                html += `
-                    <tr>
-                        <td><strong>${escapeHtml(u)}</strong></td>
-                        <td>
-                            <button class="btn btn-sm btn-danger remove-full-access" data-user="${escapeHtml(u)}">移除</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-        html += `
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-    }
-
     html += `
             <div class="admin-section">
                 <div class="admin-section-title">📋 修改記錄</div>
@@ -2138,33 +2110,6 @@ function initAdminListeners() {
             render();
         });
     }
-    const addFullAccessBtn = document.getElementById('addFullAccessBtn');
-    if (addFullAccessBtn && isSuperAdmin(currentUser)) {
-        addFullAccessBtn.addEventListener('click', () => {
-            const input = document.getElementById('addFullAccessInput');
-            const val = input.value.trim();
-            if (!/^0\d{6}$/.test(val)) { alert('請輸入正確格式的工號（以 0 開頭的 7 位數字）'); return; }
-            if (fullAccessUsers.includes(val)) { alert('該工號已在完全存取用戶清單中'); return; }
-            fullAccessUsers.push(val);
-            saveFullAccessUsers(fullAccessUsers);
-            addLog('update', '管理功能', `新增完全存取用戶：${val}`);
-            alert(`已新增完全存取用戶：${val}`);
-            render();
-        });
-    }
-    container.querySelectorAll('.remove-full-access').forEach(btn => {
-        if (!isSuperAdmin(currentUser)) return;
-        btn.addEventListener('click', () => {
-            const user = btn.getAttribute('data-user');
-            if (user === SUPER_ADMIN) { alert('無法移除超級管理員'); return; }
-            if (!confirm(`確定移除完全存取用戶 ${user} 嗎？`)) return;
-            fullAccessUsers = fullAccessUsers.filter(u => u !== user);
-            saveFullAccessUsers(fullAccessUsers);
-            addLog('update', '管理功能', `移除完全存取用戶：${user}`);
-            alert(`已移除完全存取用戶：${user}`);
-            render();
-        });
-    });
 }
 
 /* ============================================================
@@ -2865,11 +2810,6 @@ function exportCartToDocx() {
 /* ============================================================
    初始化
    ============================================================ */
-window.addEventListener('DOMContentLoaded', () => {
-    applyFontSize(loadFontSize());
-    initLogin();
-});
-
 window.render = render;
 window.carts = carts;
 </script>
