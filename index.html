@@ -302,22 +302,34 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  // 👇 新增引入 Auth 模組
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-  // ⚠️ 1. 这里填入你在 Firebase 后台复制的 firebaseConfig
   const firebaseConfig = {
-    apiKey: "AIzaSy...",
-    authDomain: "firstaidcar.firebaseapp.com",
-    projectId: "firstaidcar",
-    storageBucket: "firstaidcar.firebasestorage.app",
-    messagingSenderId: "1074989986808",
-    appId: "1:1074989986808:web:..."
+    // ... 你的 firebaseConfig 保持不變 ...
   };
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app); // 👈 初始化 Auth
 
-  // 将 Firebase 的函数挂载到 window 上，让原本的代码能调用
-  window.firebaseAPI = { doc, getDoc, setDoc, db };
+  // 👇 啟動匿名登入，並獲取設備 UID
+  let deviceUID = null;
+  const authReady = new Promise((resolve) => {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        deviceUID = user.uid;
+        console.log("✅ 當前設備 UID:", deviceUID);
+        resolve(deviceUID);
+      } else {
+        signInAnonymously(auth).catch((error) => {
+          console.error("匿名登入失敗:", error);
+        });
+      }
+    });
+  });
+
+  window.firebaseAPI = { doc, getDoc, setDoc, db, authReady, getDeviceUID: () => deviceUID };
 </script>
 
 <script>
@@ -669,6 +681,7 @@ async function saveToLocalStorage() {
     try {
         if (!window.firebaseAPI) return;
         const { doc, setDoc, db } = window.firebaseAPI;
+        await authReady;
         const docRef = doc(db, "carts", "main");
         
         // 将整个 carts 数组和暗号一起保存
