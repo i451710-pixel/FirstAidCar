@@ -319,7 +319,7 @@
     onAuthStateChanged(auth, (user) => {
       if (user) {
         deviceUID = user.uid;
-        console.log("✅ 當前設備 UID:", deviceUID);
+        alert("✅ 當前設備 UID: "  deviceUID ");
         resolve(deviceUID);
       } else {
         signInAnonymously(auth).catch((error) => {
