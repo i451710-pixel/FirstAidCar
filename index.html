@@ -1133,7 +1133,7 @@ async function enterApp() {
     autoLoadTemplate();
     initRealtimeListener();
 
-    if (currentPermission === 'full') {
+        if (currentPermission === 'full') {
         userNameEl.classList.add('full-access');
     } else {
         userNameEl.classList.remove('full-access');
@@ -1143,7 +1143,19 @@ async function enterApp() {
             setTimeout(() => alert("⚠️ 權限為【唯讀模式】。\n只能查看與匯出資料。"), 500);
         }
     }
-}
+
+    const adminBtnEl = document.getElementById('adminBtn');
+    if (adminBtnEl) {
+        if (currentPermission === 'full') {
+            adminBtnEl.disabled = false;
+            adminBtnEl.style.opacity = '1';
+            adminBtnEl.style.cursor = 'pointer';
+        } else {
+            adminBtnEl.disabled = true;
+            adminBtnEl.style.opacity = '0.45';
+            adminBtnEl.style.cursor = 'not-allowed';
+        }
+    }
 
 function logout() {
     if (!confirm('確定要登出嗎？')) return;
@@ -2201,6 +2213,7 @@ function getSegValues(cartId, section, itemId) {
 }
 
 function commitDateSeg(cartId, section, itemId, autoFillDay) {
+    if (currentPermission === 'readonly') return null;
     const item = findItem(cartId, section, itemId);
     if (!item) return null;
     const cart = carts.find(c => c.id === cartId);
@@ -2411,9 +2424,13 @@ function initGlobalListeners() {
         }
     }, true);
 
-    container.addEventListener('change', e => {
+        container.addEventListener('change', e => {
         const t = e.target;
         if (t.matches('.oos-checkbox')) {
+            if (currentPermission === 'readonly') {
+                t.checked = !t.checked;
+                return;
+            }
             const { cartId, section, itemId } = t.dataset;
             const item = findItem(cartId, section, itemId);
             if (!item) return;
@@ -2490,6 +2507,7 @@ function initGlobalListeners() {
         if (!btn || btn.disabled) return;
 
         if (btn.classList.contains('date-seg-clear')) {
+            if (currentPermission === 'readonly') return;
             const { cartId, section, itemId } = btn.dataset;
             const item = findItem(cartId, section, itemId);
             const cart = carts.find(c => c.id === cartId);
@@ -2500,7 +2518,8 @@ function initGlobalListeners() {
             render();
             return;
         }
-        if (btn.classList.contains('delete-item')) {
+            if (btn.classList.contains('delete-item')) {
+            if (currentPermission !== 'full') return;
             const { cartId, section, itemId } = btn.dataset;
             const cart = carts.find(c => c.id === cartId);
             if (!cart) return;
@@ -2513,7 +2532,8 @@ function initGlobalListeners() {
             render();
             return;
         }
-        if (btn.classList.contains('add-item-to-section')) {
+            if (btn.classList.contains('add-item-to-section')) {
+            if (currentPermission !== 'full') return;
             const { cartId, section } = btn.dataset;
             const cart = carts.find(c => c.id === cartId);
             if (!cart) return;
@@ -2526,6 +2546,7 @@ function initGlobalListeners() {
             return;
         }
         if (btn.classList.contains('delete-section')) {
+            if (currentPermission !== 'full') return;
             const { cartId, section } = btn.dataset;
             const cart = carts.find(c => c.id === cartId);
             if (!cart) return;
@@ -2543,6 +2564,7 @@ function initGlobalListeners() {
             return;
         }
         if (btn.classList.contains('add-section-btn')) {
+            if (currentPermission !== 'full') return;
             const cartId = btn.dataset.cartId;
             const cart = carts.find(c => c.id === cartId);
             if (!cart) return;
@@ -2561,7 +2583,8 @@ function initGlobalListeners() {
             render();
             return;
         }
-        if (btn.classList.contains('move-section-up')) {
+         if (btn.classList.contains('move-section-up')) {
+            if (currentPermission !== 'full') return;
             const { cartId, section } = btn.dataset;
             const cart = carts.find(c => c.id === cartId);
             if (!cart || !cart.sectionOrder) return;
@@ -2573,6 +2596,7 @@ function initGlobalListeners() {
             return;
         }
         if (btn.classList.contains('move-section-down')) {
+            if (currentPermission !== 'full') return;
             const { cartId, section } = btn.dataset;
             const cart = carts.find(c => c.id === cartId);
             if (!cart || !cart.sectionOrder) return;
@@ -2583,21 +2607,12 @@ function initGlobalListeners() {
             render();
             return;
         }
-        if (btn.classList.contains('delete-cart')) {
-            const cartId = btn.dataset.cartId;
-            const cart = carts.find(c => c.id === cartId);
-            if (!cart) return;
-            if (!requestDeletePassword()) return;
-            addLog('delete', cart.name, `刪除整台急救車「${cart.name}」`);
-            carts = carts.filter(c => c.id !== cartId);
-            if (carts.length === 0) activeTab = 'overview';
-            else { activeTab = 'cart:0'; currentCartIndex = 0; }
-            saveToLocalStorage();
-            render();
+    });
+        document.getElementById('adminBtn').addEventListener('click', () => {
+        if (currentPermission !== 'full') {
+            alert('權限不足。');
             return;
         }
-    });
-    document.getElementById('adminBtn').addEventListener('click', () => {
         if (!requestAdminPassword()) return;
         activeTab = 'admin';
         render();
@@ -2674,6 +2689,16 @@ async function autoLoadTemplate() {
 
 function handleFieldChange(target) {
     const { cartId, section, itemId, field, sectionKey } = target.dataset;
+
+    // 權限守衛
+    if (field === 'name' && !section) {
+        if (currentPermission !== 'full') return;
+    } else if (field === 'sectionName' && sectionKey) {
+        if (currentPermission !== 'full') return;
+    } else if (itemId) {
+        if ((field === 'name' || field === 'quantity') && currentPermission !== 'full') return;
+        if (currentPermission === 'readonly') return;
+    }
 
     if (field === 'name' && !section) {
         const cart = carts.find(c => c.id === cartId);
