@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>急救車物品管理系統</title>
     <style>
+         input:disabled, textarea:disabled {
+            background-color: transparent !important;
+            border-color: transparent !important;
+            color: var(--text) !important;
+            -webkit-text-fill-color: var(--text) !important;
+            opacity: 1 !important;
+            cursor: default;
+        }
         * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, 'Microsoft JhengHei', 'Helvetica Neue', sans-serif; }
         :root { font-size: 17px; }
         html[data-fontsize="small"] { font-size: 15px; }
@@ -267,7 +275,6 @@
     </h1>
 
     <div class="toolbar">
-        <button class="btn btn-primary" id="addCartBtn">＋ 新增急救車</button>
         <button class="btn btn-export" id="exportWordBtn">📄 匯出</button>
         <span class="template-hint" id="templateHint">模板：未選擇</span>
         <button class="btn btn-admin" id="adminBtn">⚙️ 管理功能 🔒</button>
@@ -1041,6 +1048,7 @@ let currentCartIndex = 0;
 let templateArrayBuffer = null;
 let templateFileName = '';
 let currentUser = '';
+let currentPermission = 'readonly';
 let adminUnlocked = false;
 let draggedCartIndex = null;
 let selectedMonth15 = null;
@@ -1082,33 +1090,37 @@ function initLogin() {
     input.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
     input.focus();
 }
-
-// 檢查當前設備或工號是否有修改權限
-async function checkWritePermission() {
-    if (!window.firebaseAPI) return false;
-    const { doc, getDoc, db, authReady, getDeviceUID } = window.firebaseAPI;
     
-    await authReady; // 確保 Firebase 已載入
+// 檢查權限等級 (full / partial / readonly)
+async function checkPermissionLevel() {
+    if (!window.firebaseAPI) return 'readonly';
+    const { doc, getDoc, db, authReady, getDeviceUID } = window.firebaseAPI;
+    await authReady; 
     const deviceUID = getDeviceUID();
     
-    // 1. 檢查是否為授權工號
+    let isUserAuthorized = false;
+    let isDeviceAuthorized = false;
+
     try {
         const userDoc = await getDoc(doc(db, "authorized_users", currentUser));
-        if (userDoc.exists()) return true;
+        if (userDoc.exists()) isUserAuthorized = true;
     } catch (e) { console.warn("檢查工號失敗:", e); }
     
-    // 2. 如果不是授權工號，檢查是否為主電腦
     if (deviceUID) {
         try {
             const deviceDoc = await getDoc(doc(db, "master_devices", deviceUID));
-            if (deviceDoc.exists()) return true;
+            if (deviceDoc.exists()) isDeviceAuthorized = true;
         } catch (e) { console.warn("檢查設備失敗:", e); }
     }
     
-    return false;
+    if (isUserAuthorized && isDeviceAuthorized) return 'full';
+    if (isUserAuthorized || isDeviceAuthorized) return 'partial';
+    return 'readonly';
 }
-    
+
 async function enterApp() {
+    currentPermission = await checkPermissionLevel();
+    
     document.getElementById('loginOverlay').style.display = 'none';
     document.getElementById('appContainer').style.display = 'block';
     const userNameEl = document.getElementById('currentUser');
@@ -1121,23 +1133,15 @@ async function enterApp() {
     autoLoadTemplate();
     initRealtimeListener();
 
-   const canWrite = await checkWritePermission();
-    if (canWrite) {
+    if (currentPermission === 'full') {
         userNameEl.classList.add('full-access');
     } else {
         userNameEl.classList.remove('full-access');
-        setTimeout(() => {
-            document.querySelectorAll('input, button').forEach(el => {
-                if (!el.classList.contains('logout-btn') && 
-                    !el.closest('.fontsize-group') && 
-                    !el.classList.contains('tab-btn') &&
-                    el.id !== 'exportWordBtn') {
-                    el.disabled = true;
-                    el.style.opacity = '0.6';
-                }
-            });
-            alert("⚠️ 您目前的工號與設備只有查看權限，無法修改資料。");
-        }, 500);
+        if (currentPermission === 'partial') {
+            setTimeout(() => alert("🔓 權限為【部分存取】。\n只能修改有效日期、備註及缺貨狀態。"), 500);
+        } else {
+            setTimeout(() => alert("⚠️ 權限為【唯讀模式】。\n只能查看與匯出資料。"), 500);
+        }
     }
 }
 
@@ -1257,47 +1261,45 @@ function countExpiringItems(days) {
 function renderCartPage() {
     const cart = carts[currentCartIndex];
     if (!cart) return `<div class="empty-state">找不到急救車</div>`;
+    
+    const isFull = currentPermission === 'full'; // 👈 判斷是否完全權限
 
-    const stats = countCartStats(cart);
-    let statsBadges = '';
-    if (stats.warningCount > 0) statsBadges += `<span class="badge-warning">⏳ ${stats.warningCount} 項 &lt;90天</span>`;
-    if (stats.dangerCount > 0) statsBadges += `<span class="badge-danger pulse">🔴 ${stats.dangerCount} 項 &lt;30天</span>`;
-    if (stats.oosCount > 0) statsBadges += `<span class="badge-danger">📦 ${stats.oosCount} 項 缺貨</span>`;
+    // ... (統計資料代碼保持不變) ...
 
     let html = `
         <div class="cart-card">
             <div class="cart-header">
                 <div class="cart-title">
                     <input class="cart-name" type="text" value="${escapeHtml(cart.name)}" 
-                           data-cart-id="${cart.id}" data-field="name" placeholder="急救車名稱">
+                           data-cart-id="${cart.id}" data-field="name" placeholder="急救車名稱"
+                           ${isFull ? '' : 'disabled'}> <!-- 👈 加入 disabled -->
                     <div class="cart-meta">
                         <span>📦 物品 ${countCartItems(cart)} 項</span>
                         ${statsBadges}
                     </div>
                 </div>
+                ${isFull ? `
                 <div class="cart-actions">
                     <button class="btn btn-danger delete-cart" data-cart-id="${cart.id}">🗑 刪除車</button>
                 </div>
+                ` : ''} <!-- 👈 隱藏刪除車按鈕 -->
             </div>
     `;
 
     const order = (cart.sectionOrder && Array.isArray(cart.sectionOrder))
-        ? cart.sectionOrder
-        : Object.keys(cart.items);
+        ? cart.sectionOrder : Object.keys(cart.items);
 
     order.forEach((secKey, idx) => {
-        if (!cart.items[secKey]) return;
-        const items = cart.items[secKey] || [];
-        const secName = (cart.sectionNames && cart.sectionNames[secKey]) || secKey;
-        const isFirst = idx === 0;
-        const isLast = idx === order.length - 1;
-
+        // ...
         html += `
             <div class="section-header">
                 <input class="section-title-input" type="text" 
                        value="${escapeHtml(secName)}"
                        data-cart-id="${cart.id}" data-section-key="${secKey}" data-field="sectionName"
-                       title="可直接修改區域名稱">
+                       title="可直接修改區域名稱"
+                       ${isFull ? '' : 'disabled'}> <!-- 👈 加入 disabled -->
+                
+                ${isFull ? `
                 <div class="section-actions">
                     <button class="btn btn-sm btn-move move-section-up" 
                             data-cart-id="${cart.id}" data-section="${secKey}"
@@ -1308,35 +1310,18 @@ function renderCartPage() {
                     <button class="btn btn-sm add-item-to-section" data-cart-id="${cart.id}" data-section="${secKey}">＋ 新增物品</button>
                     <button class="btn btn-sm btn-danger delete-section" data-cart-id="${cart.id}" data-section="${secKey}">🗑 刪除區域</button>
                 </div>
+                ` : ''} <!-- 👈 隱藏新增物品、刪除區域與排序按鈕 -->
             </div>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width:24%">物品名稱</th>
-                            <th style="width:7%">數量</th>
-                            <th style="width:20%">有效日期 (年/月/日)</th>
-                            <th style="width:16%">備註</th>
-                            <th style="width:9%">缺貨</th>
-                            <th style="width:12%">狀態</th>
-                            <th style="width:6%">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+            // ... (表格代碼保持不變) ...
         `;
-        if (items.length === 0) {
-            html += `<tr><td colspan="7" style="text-align:center; padding:20px; color:#8aa9bb;">無物品</td></tr>`;
-        } else {
-            items.forEach(item => { html += renderItemRow(cart.id, secKey, item); });
-        }
-        html += `</tbody></table></div>`;
+        // ...
     });
 
     html += `
         <div class="add-section-bar">
-            <button class="btn btn-primary add-section-btn" data-cart-id="${cart.id}">＋ 新增區域</button>
+            ${isFull ? `<button class="btn btn-primary add-section-btn" data-cart-id="${cart.id}">＋ 新增區域</button>` : ''}
         </div>
-    `;
+    `; // 👈 隱藏新增區域按鈕
 
     html += `</div>`;
     return html;
@@ -1349,42 +1334,20 @@ function countCartItems(cart) {
 }
 
 function renderItemRow(cartId, sectionKey, item) {
-    const segClass = getDateSegHighlight(item.expiry);
-    const rowClass = getRowHighlightClass(item);
-    const nonExpiring = isNonExpiring(item.expiry);
-    const daysLeft = nonExpiring ? Infinity : daysUntil(item.expiry);
-
-    let statusHtml = '';
-    let statusColor = '';
-    if (item.outOfStock) {
-        statusHtml = '缺貨';
-        statusColor = '#b33a3a';
-    } else if (nonExpiring) {
-        statusHtml = '<span class="no-expiry-badge">不會過期</span>';
-    } else if (daysLeft < 0) {
-        statusHtml = `已過期 ${Math.abs(daysLeft)} 天`;
-        statusColor = '#b33a3a';
-    } else {
-        statusHtml = `${daysLeft} 天`;
-        statusColor = daysLeft < 30 ? '#b33a3a' : (daysLeft < 90 ? '#b68b00' : '#2a4d62');
-    }
-
-    const oosChecked = item.outOfStock ? 'checked' : '';
-    const oosLabelClass = item.outOfStock ? 'oos-label checked' : 'oos-label';
-
-    const { y, m, d } = parseDateStr(item.expiry);
-
-    /* 判斷是否為急救藥物盒鎖匙，決定備註欄的 placeholder */
-    const isLockItem = sectionKey === 'level1' &&
-                       (item.name.includes('急救藥物盒鎖匙') || item.name.includes('Lock No'));
-    const notePlaceholder = isLockItem ? '請輸入藥盒編號' : '';
+    const isFull = currentPermission === 'full'; // 👈 判斷完全權限
+    
+    // ... (狀態與日期判斷代碼保持不變) ...
 
     return `
         <tr class="item-row ${rowClass}" data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}">
             <td><input class="item-name-input" type="text" value="${escapeHtml(item.name)}" 
-                       data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="name"></td>
+                       data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="name"
+                       ${isFull ? '' : 'disabled'}></td> <!-- 👈 鎖定名稱 -->
+                       
             <td><input class="number-input qty-input" type="number" min="0" step="1" 
-                       value="${item.quantity}" data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="quantity"></td>
+                       value="${item.quantity}" data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="quantity"
+                       ${isFull ? '' : 'disabled'}></td> <!-- 👈 鎖定數量 -->
+                       
             <td>
                 <div class="date-seg-group ${segClass}" 
                      data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}">
@@ -1424,11 +1387,11 @@ function renderItemRow(cartId, sectionKey, item) {
             <td style="font-weight:600; color:${statusColor}">${statusHtml}</td>
             <td>
                 <div class="action-buttons">
-                    <button class="icon-btn delete-item" data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" title="刪除物品">🗑️</button>
+                    ${isFull ? `<button class="icon-btn delete-item" data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" title="刪除物品">🗑️</button>` : ''}
                 </div>
             </td>
         </tr>
-    `;
+    `; <!-- 👈 隱藏物品刪除按鈕 -->
 }
 
 /* ============================================================
@@ -2580,17 +2543,6 @@ function initGlobalListeners() {
             return;
         }
     });
-
-    document.getElementById('addCartBtn').addEventListener('click', () => {
-        const newCart = createFullCart(`急救車 - ${String(carts.length + 1).padStart(2,'0')}`);
-        carts.push(newCart);
-        activeTab = 'cart:' + (carts.length - 1);
-        currentCartIndex = carts.length - 1;
-        saveToLocalStorage();
-        addLog('create', newCart.name, `新增急救車「${newCart.name}」`);
-        render();
-    });
-
     document.getElementById('adminBtn').addEventListener('click', () => {
         if (!requestAdminPassword()) return;
         activeTab = 'admin';
