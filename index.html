@@ -301,7 +301,7 @@
 <!-- 引入 Firebase 模组 -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
   const firebaseConfig = {
@@ -334,7 +334,7 @@
     });
   });
 
-  window.firebaseAPI = { doc, getDoc, setDoc, db, authReady, getDeviceUID: () => deviceUID };
+  window.firebaseAPI = { doc, getDoc, setDoc, onSnapshot, db, authReady, getDeviceUID: () => deviceUID };
 </script>
 
 <script>
@@ -667,7 +667,8 @@ async function loadFromLocalStorage() {
     }
 }
 
-// 取代原本的 saveToLocalStorage
+let isSavingLocally = false; // 👈 新增這個全域變數
+
 async function saveToLocalStorage() {
     try {
         if (!window.firebaseAPI) return;
@@ -675,18 +676,70 @@ async function saveToLocalStorage() {
         await authReady;
         const docRef = doc(db, "carts", "main");
         
+        isSavingLocally = true; // 👈 準備存檔，打開開關
+
         await setDoc(docRef, {
             carts: carts,
             deviceSecret: DEVICE_SECRET,
-            login_id: currentUser // 👈 新增這行，把當前登入的工號傳給 Firebase
+            login_id: currentUser
         });
         console.log("✅ 資料已同步至雲端");
+        
+        // 👇 延遲 0.5 秒後才關閉開關，確保雲端回傳的變動被忽略
+        setTimeout(() => { isSavingLocally = false; }, 500);
+
     } catch (error) {
+        isSavingLocally = false;
         console.error("❌ 保存失敗:", error);
         alert("保存失敗！此工號或設備未獲授權修改數據。");
     }
 }
 
+function initRealtimeListener() {
+    if (!window.firebaseAPI) return;
+    const { doc, onSnapshot, db } = window.firebaseAPI;
+    const docRef = doc(db, "carts", "main");
+
+    onSnapshot(docRef, (docSnap) => {
+        if (!docSnap.exists()) return;
+
+        // 如果是自己存檔觸發的，或者是本地尚未同步的變動，直接忽略
+        if (isSavingLocally || docSnap.metadata.hasPendingWrites) return;
+
+        const data = docSnap.data();
+        const cloudCarts = data.carts || [];
+        
+        // 比對本地資料和雲端資料是否不同
+        const localJson = JSON.stringify(carts);
+        const cloudJson = JSON.stringify(cloudCarts);
+
+        if (localJson !== cloudJson) {
+            console.log("🔄 偵測到其他設備更新，正在同步畫面...");
+            
+            // 更新本地記憶體
+            carts = cloudCarts; 
+            
+            // 👇 防呆：如果雲端刪除了車，本地索引可能越界
+            if (currentCartIndex >= carts.length) {
+                currentCartIndex = Math.max(0, carts.length - 1);
+                activeTab = 'cart:' + currentCartIndex;
+                if (carts.length === 0) activeTab = 'overview';
+            }
+            
+            // 如果使用者「正在輸入」，先不要重新渲染，以免游標消失
+            const active = document.activeElement;
+            const isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
+            
+            if (!isTyping) {
+                render(); // 安全更新畫面
+                console.log("✅ 畫面已自動同步");
+            } else {
+                console.log("⚠️ 其他設備剛更新了資料，但您正在輸入，已暫停重整。");
+            }
+        }
+    });
+}
+    
 function isLogExpired(log) {
     if (!log || !log.time) return true;
     const t = new Date(log.time).getTime();
@@ -1066,6 +1119,7 @@ async function enterApp() {
     initGlobalListeners();
     updateTemplateHint();
     autoLoadTemplate();
+    initRealtimeListener();
 
    const canWrite = await checkWritePermission();
     if (canWrite) {
