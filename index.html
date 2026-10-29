@@ -1254,11 +1254,10 @@ function countExpiringItems(days) {
     });
     return count;
 }
-
 /* ============================================================
    渲染單部急救車頁面
    ============================================================ */
-ffunction renderCartPage() {
+function renderCartPage() {
     const cart = carts[currentCartIndex];
     if (!cart) return `<div class="empty-state">找不到急救車</div>`;
 
@@ -1354,6 +1353,12 @@ ffunction renderCartPage() {
 
     html += `</div>`;
     return html;
+}
+
+function countCartItems(cart) {
+    let n = 0;
+    Object.keys(cart.items).forEach(k => n += (cart.items[k] || []).length);
+    return n;
 }
 
 function renderItemRow(cartId, sectionKey, item) {
