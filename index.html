@@ -1258,140 +1258,189 @@ function countExpiringItems(days) {
 /* ============================================================
    渲染單部急救車頁面
    ============================================================ */
-function renderCartPage() {
+ffunction renderCartPage() {
     const cart = carts[currentCartIndex];
     if (!cart) return `<div class="empty-state">找不到急救車</div>`;
-    
-    const isFull = currentPermission === 'full'; // 👈 判斷是否完全權限
 
-    // ... (統計資料代碼保持不變) ...
+    const isFull = currentPermission === 'full';
+
+    const stats = countCartStats(cart);
+    let statsBadges = '';
+    if (stats.oosCount > 0) statsBadges += `<span class="badge-danger">缺貨 ${stats.oosCount}</span>`;
+    if (stats.dangerCount > 0) statsBadges += `<span class="badge-danger pulse">&lt;30天 ${stats.dangerCount}</span>`;
+    if (stats.warningCount > 0) statsBadges += `<span class="badge-warning">90天內 ${stats.warningCount}</span>`;
 
     let html = `
         <div class="cart-card">
             <div class="cart-header">
                 <div class="cart-title">
-                    <input class="cart-name" type="text" value="${escapeHtml(cart.name)}" 
+                    <input class="cart-name" type="text" value="${escapeHtml(cart.name)}"
                            data-cart-id="${cart.id}" data-field="name" placeholder="急救車名稱"
-                           ${isFull ? '' : 'disabled'}> <!-- 👈 加入 disabled -->
+                           ${isFull ? '' : 'disabled'}>
                     <div class="cart-meta">
                         <span>📦 物品 ${countCartItems(cart)} 項</span>
                         ${statsBadges}
                     </div>
                 </div>
-                ${isFull ? `
-                <div class="cart-actions">
-                    <button class="btn btn-danger delete-cart" data-cart-id="${cart.id}">🗑 刪除車</button>
-                </div>
-                ` : ''} <!-- 👈 隱藏刪除車按鈕 -->
             </div>
     `;
 
     const order = (cart.sectionOrder && Array.isArray(cart.sectionOrder))
-        ? cart.sectionOrder : Object.keys(cart.items);
+        ? cart.sectionOrder
+        : Object.keys(cart.items);
 
     order.forEach((secKey, idx) => {
-        // ...
+        const items = cart.items[secKey] || [];
+        const secName = (cart.sectionNames && cart.sectionNames[secKey]) || secKey;
+        const isFirst = idx === 0;
+        const isLast = idx === order.length - 1;
+
         html += `
             <div class="section-header">
-                <input class="section-title-input" type="text" 
+                <input class="section-title-input" type="text"
                        value="${escapeHtml(secName)}"
                        data-cart-id="${cart.id}" data-section-key="${secKey}" data-field="sectionName"
                        title="可直接修改區域名稱"
-                       ${isFull ? '' : 'disabled'}> <!-- 👈 加入 disabled -->
-                
+                       ${isFull ? '' : 'disabled'}>
+
                 ${isFull ? `
                 <div class="section-actions">
-                    <button class="btn btn-sm btn-move move-section-up" 
+                    <button class="btn btn-sm btn-move move-section-up"
                             data-cart-id="${cart.id}" data-section="${secKey}"
                             ${isFirst ? 'disabled' : ''} title="區域上移">↑</button>
-                    <button class="btn btn-sm btn-move move-section-down" 
+                    <button class="btn btn-sm btn-move move-section-down"
                             data-cart-id="${cart.id}" data-section="${secKey}"
                             ${isLast ? 'disabled' : ''} title="區域下移">↓</button>
                     <button class="btn btn-sm add-item-to-section" data-cart-id="${cart.id}" data-section="${secKey}">＋ 新增物品</button>
                     <button class="btn btn-sm btn-danger delete-section" data-cart-id="${cart.id}" data-section="${secKey}">🗑 刪除區域</button>
                 </div>
-                ` : ''} <!-- 👈 隱藏新增物品、刪除區域與排序按鈕 -->
+                ` : ''}
             </div>
-            // ... (表格代碼保持不變) ...
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:30%">物品名稱</th>
+                            <th style="width:8%">數量</th>
+                            <th style="width:18%">有效日期</th>
+                            <th style="width:20%">備註</th>
+                            <th style="width:8%">缺貨</th>
+                            <th style="width:10%">狀態</th>
+                            <th style="width:6%">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
         `;
-        // ...
+
+        if (items.length === 0) {
+            html += `<tr><td colspan="7" style="text-align:center; color:#8aa9bb; padding:18px;">此區域尚無物品</td></tr>`;
+        } else {
+            items.forEach(item => {
+                html += renderItemRow(cart.id, secKey, item);
+            });
+        }
+
+        html += `</tbody></table></div>`;
     });
 
-    html += `
-        <div class="add-section-bar">
-            ${isFull ? `<button class="btn btn-primary add-section-btn" data-cart-id="${cart.id}">＋ 新增區域</button>` : ''}
-        </div>
-    `; // 👈 隱藏新增區域按鈕
+    if (isFull) {
+        html += `
+            <div class="add-section-bar">
+                <button class="btn btn-primary add-section-btn" data-cart-id="${cart.id}">＋ 新增區域</button>
+            </div>
+        `;
+    }
 
     html += `</div>`;
     return html;
 }
 
-function countCartItems(cart) {
-    let n = 0;
-    Object.keys(cart.items).forEach(k => n += (cart.items[k] || []).length);
-    return n;
-}
-
 function renderItemRow(cartId, sectionKey, item) {
-    const isFull = currentPermission === 'full'; // 👈 判斷完全權限
-    
-    // ... (狀態與日期判斷代碼保持不變) ...
+    const isFull = currentPermission === 'full';
+    const canEditBasic = currentPermission === 'full' || currentPermission === 'partial';
+    const isReadonly = currentPermission === 'readonly';
+
+    const rowClass = getRowHighlightClass(item);
+    const { y, m, d } = parseDateStr(item.expiry);
+    const segClass = getDateSegHighlight(item.expiry);
+
+    let statusColor = '#2a4d62';
+    let statusHtml = '';
+    if (item.outOfStock) {
+        statusColor = '#b33a3a';
+        statusHtml = '缺貨';
+    } else if (isNonExpiring(item.expiry)) {
+        statusHtml = '<span class="no-expiry-badge">不會過期</span>';
+    } else {
+        const days = daysUntil(item.expiry);
+        statusHtml = days < 0 ? `已過期 ${Math.abs(days)} 天` : `${days} 天`;
+        statusColor = days < 30 ? '#b33a3a' : (days < 90 ? '#b68b00' : '#2a4d62');
+    }
+
+    const oosLabelClass = item.outOfStock ? 'oos-label checked' : 'oos-label';
+    const oosChecked = item.outOfStock ? 'checked' : '';
+    const dateDisabled = (item.outOfStock || isReadonly) ? 'disabled' : '';
 
     return `
         <tr class="item-row ${rowClass}" data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}">
-            <td><input class="item-name-input" type="text" value="${escapeHtml(item.name)}" 
+            <td><input class="item-name-input" type="text" value="${escapeHtml(item.name)}"
                        data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="name"
-                       ${isFull ? '' : 'disabled'}></td> <!-- 👈 鎖定名稱 -->
-                       
-            <td><input class="number-input qty-input" type="number" min="0" step="1" 
+                       ${isFull ? '' : 'disabled'}></td>
+
+            <td><input class="number-input qty-input" type="number" min="0" step="1"
                        value="${item.quantity}" data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="quantity"
-                       ${isFull ? '' : 'disabled'}></td> <!-- 👈 鎖定數量 -->
-                       
+                       ${isFull ? '' : 'disabled'}></td>
+
             <td>
-                <div class="date-seg-group ${segClass}" 
+                <div class="date-seg-group ${segClass}"
                      data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}">
                     <input type="text" class="date-seg year" inputmode="numeric" maxlength="4"
                            value="${y}"
                            data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="dateYear"
-                           ${item.outOfStock ? 'disabled' : ''}>
+                           ${dateDisabled}>
                     <span class="date-seg-sep">/</span>
                     <input type="text" class="date-seg month" inputmode="numeric" maxlength="2"
                            value="${m}"
                            data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="dateMonth"
-                           ${item.outOfStock ? 'disabled' : ''}>
+                           ${dateDisabled}>
                     <span class="date-seg-sep">/</span>
                     <input type="text" class="date-seg day" inputmode="numeric" maxlength="2"
                            value="${d}"
                            data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="dateDay"
-                           ${item.outOfStock ? 'disabled' : ''}>
-                    <button class="date-seg-clear" 
-                            data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" 
-                            title="清空日期">✕</button>
+                           ${dateDisabled}>
+                    ${canEditBasic ? `<button class="date-seg-clear"
+                            data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}"
+                            title="清空日期">✕</button>` : ''}
                 </div>
             </td>
+
             <td>
-                <input class="note-input" type="text" 
+                <input class="note-input" type="text"
                        value="${escapeHtml(item.note || '')}"
-                       placeholder="${notePlaceholder}"
-                       data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="note">
+                       placeholder="${isReadonly ? '' : '備註'}"
+                       data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" data-field="note"
+                       ${isReadonly ? 'disabled' : ''}>
             </td>
+
             <td>
                 <label class="${oosLabelClass}">
-                    <input type="checkbox" class="oos-checkbox" 
+                    <input type="checkbox" class="oos-checkbox"
                            data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}"
-                           ${oosChecked}>
+                           ${oosChecked} ${isReadonly ? 'disabled' : ''}>
                     缺貨
                 </label>
             </td>
+
             <td style="font-weight:600; color:${statusColor}">${statusHtml}</td>
+
             <td>
                 <div class="action-buttons">
                     ${isFull ? `<button class="icon-btn delete-item" data-cart-id="${cartId}" data-section="${sectionKey}" data-item-id="${item.id}" title="刪除物品">🗑️</button>` : ''}
                 </div>
             </td>
         </tr>
-    `; <!-- 👈 隱藏物品刪除按鈕 -->
+    `;
 }
 
 /* ============================================================
