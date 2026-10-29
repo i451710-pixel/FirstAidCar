@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=1000, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>急救車物品管理系統</title>
     <style>
          input:disabled, textarea:disabled {
@@ -250,6 +250,34 @@
         .admin-hint { font-size: 0.9rem; color: #6b8a9c; margin-bottom: 10px; }
         .admin-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
         .cart-id-cell { font-family: monospace; font-size: 0.85rem; color: #6b8a9c; }
+                /* ============================================================
+           強制適應手機端（當螢幕寬度小於 1200px 時套用）
+           ============================================================ */
+        @media screen and (max-width: 1200px) {
+            body { padding: 15px; }
+            
+            /* 🚨 解決圖一標題變成直排的問題 */
+            h1 { 
+                white-space: nowrap; 
+                font-size: 1.8rem;
+            }
+            
+            /* 讓工具列在縮小後依然整齊 */
+            .toolbar {
+                padding: 12px 20px;
+            }
+            
+            /* 隱藏最右邊過長的警告提示文字，節省空間 */
+            .toolbar > span:last-child { 
+                display: none; 
+            }
+            
+            /* 確保超寬的表格只會在框框內左右滑動，不會撐破手機畫面 */
+            .table-wrapper { 
+                overflow-x: auto; 
+                -webkit-overflow-scrolling: touch; 
+            }
+        }
     </style>
 </head>
 <body>
