@@ -1120,12 +1120,12 @@ async function checkPermissionLevel() {
 
 async function enterApp() {
     currentPermission = await checkPermissionLevel();
-    
+
     document.getElementById('loginOverlay').style.display = 'none';
     document.getElementById('appContainer').style.display = 'block';
     const userNameEl = document.getElementById('currentUser');
     userNameEl.textContent = `👤 ${currentUser}`;
-    
+
     applyFontSize(loadFontSize());
     render();
     initGlobalListeners();
@@ -1133,7 +1133,7 @@ async function enterApp() {
     autoLoadTemplate();
     initRealtimeListener();
 
-        if (currentPermission === 'full') {
+    if (currentPermission === 'full') {
         userNameEl.classList.add('full-access');
     } else {
         userNameEl.classList.remove('full-access');
@@ -1151,12 +1151,12 @@ async function enterApp() {
             adminBtnEl.style.opacity = '1';
             adminBtnEl.style.cursor = 'pointer';
         } else {
-            adminBtnEl.disabled = true;
+            adminBtnEl.disabled = false;
             adminBtnEl.style.opacity = '0.45';
             adminBtnEl.style.cursor = 'not-allowed';
         }
     }
-
+}
 function logout() {
     if (!confirm('確定要登出嗎？')) return;
     addLog('login', '系統', `${currentUser} 登出系統`);
